@@ -1,0 +1,13 @@
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import { rateLimit } from "express-rate-limit";
+import dotenv from "dotenv";
+dotenv.config();
+const app = express();
+const PORT = process.env.PORT || 3000;
+app.use(helmet()); app.use(cors()); app.use(express.json());
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
+app.get("/health", (_req, res) => res.json({ status: "ok", app: "test-node" }));
+app.listen(PORT, () => console.log(`🚀 test-node running on http://localhost:${PORT}`));
+export default app;

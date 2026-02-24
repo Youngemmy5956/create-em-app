@@ -1,0 +1,1 @@
+module.exports = { parser: "@typescript-eslint/parser", plugins: ["@typescript-eslint", "comment-cleaner"], extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"], rules: { "comment-cleaner/no-commented-code": "warn", "comment-cleaner/no-commented-imports": "warn" } };

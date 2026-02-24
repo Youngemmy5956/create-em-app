@@ -1,0 +1,14 @@
+export default function Home() {
+  return (
+    <main className="min-h-screen flex flex-col items-center justify-center bg-gray-950 text-white px-6">
+      <div className="text-center max-w-xl">
+        <h1 className="text-5xl font-bold tracking-tight mb-4">test-next</h1>
+        <p className="text-gray-400 text-lg mb-8">Your project is ready. Start building.</p>
+        <div className="flex gap-4 justify-center">
+          <a href="/dashboard" className="bg-white text-gray-950 font-semibold px-6 py-3 rounded-lg hover:bg-gray-200 transition">Get started</a>
+          <a href="https://nextjs.org/docs" target="_blank" rel="noopener noreferrer" className="border border-gray-700 text-gray-300 font-semibold px-6 py-3 rounded-lg hover:border-gray-400 transition">Docs →</a>
+        </div>
+      </div>
+    </main>
+  );
+}
