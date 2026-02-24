@@ -9,9 +9,9 @@
 
 "use strict";
 
-const fs           = require("fs");
-const path         = require("path");
-const readline     = require("readline");
+const fs = require("fs");
+const path = require("path");
+const readline = require("readline");
 const { execSync } = require("child_process");
 
 // ─── ANSI Colors ──────────────────────────────────────────────────────────────
@@ -21,13 +21,13 @@ const c = {
   blue: "\x1b[34m", cyan: "\x1b[36m", magenta: "\x1b[35m",
 };
 const paint = (col, t) => `${col}${t}${c.reset}`;
-const log   = (msg = "") => console.log(msg);
-const info  = (msg) => log(paint(c.cyan,           `  ${msg}`));
-const ok    = (msg) => log(paint(c.green,          `  ✅ ${msg}`));
-const step  = (msg) => log(paint(c.magenta + c.bold, `\n  ▶ ${msg}`));
-const header= (msg) => log(paint(c.cyan + c.bold,  msg));
-const spin  = (msg) => process.stdout.write(paint(c.yellow, `  ⏳ ${msg}...`));
-const done  = ()    => process.stdout.write(paint(c.green, " done\n"));
+const log = (msg = "") => console.log(msg);
+const info = (msg) => log(paint(c.cyan, `  ${msg}`));
+const ok = (msg) => log(paint(c.green, `  ✅ ${msg}`));
+const step = (msg) => log(paint(c.magenta + c.bold, `\n  ▶ ${msg}`));
+const header = (msg) => log(paint(c.cyan + c.bold, msg));
+const spin = (msg) => process.stdout.write(paint(c.yellow, `  ⏳ ${msg}...`));
+const done = () => process.stdout.write(paint(c.green, " done\n"));
 
 // ─── Readline helpers ─────────────────────────────────────────────────────────
 function createRL() {
@@ -71,9 +71,9 @@ function printTree(root, prefix = "", depth = 0) {
   try { entries = fs.readdirSync(root, { withFileTypes: true }); } catch { return; }
   const filtered = entries.filter(e => !["node_modules", ".git", ".next"].includes(e.name));
   filtered.forEach((entry, idx) => {
-    const isLast    = idx === filtered.length - 1;
+    const isLast = idx === filtered.length - 1;
     const connector = isLast ? "└── " : "├── ";
-    const col       = entry.isDirectory() ? c.cyan : c.dim;
+    const col = entry.isDirectory() ? c.cyan : c.dim;
     log(paint(c.dim, `  ${prefix}${connector}`) + paint(col, entry.name));
     if (entry.isDirectory()) {
       printTree(path.join(root, entry.name), prefix + (isLast ? "    " : "│   "), depth + 1);
@@ -92,30 +92,30 @@ function scaffoldNextjs(root, name, opts) {
     version: "0.1.0",
     private: true,
     scripts: {
-      dev:   "next dev",
+      dev: "next dev",
       build: "next build",
       start: "next start",
-      lint:  "next lint",
+      lint: "next lint",
     },
     dependencies: {
-      next:       "14.2.3",
-      react:      "^18",
-      "react-dom":"^18",
+      next: "14.2.3",
+      react: "^18",
+      "react-dom": "^18",
       ...(opts.firebase ? {
         firebase: "^10.12.2",
       } : {}),
     },
     devDependencies: {
-      typescript:          "^5",
-      "@types/node":       "^20",
-      "@types/react":      "^18",
-      "@types/react-dom":  "^18",
-      eslint:              "^8",
-      "eslint-config-next":"14.2.3",
+      typescript: "^5",
+      "@types/node": "^20",
+      "@types/react": "^18",
+      "@types/react-dom": "^18",
+      eslint: "^8",
+      "eslint-config-next": "14.2.3",
       "eslint-plugin-comment-cleaner": "^1.1.0",
       ...(opts.tailwind ? {
-        tailwindcss:  "^3.4.1",
-        postcss:      "^8",
+        tailwindcss: "^3.4.1",
+        postcss: "^8",
         autoprefixer: "^10.0.1",
       } : {}),
     },
@@ -124,29 +124,28 @@ function scaffoldNextjs(root, name, opts) {
   // ── tsconfig.json ─────────────────────────────────────────────────────────
   write(path.join(root, "tsconfig.json"), JSON.stringify({
     compilerOptions: {
-      lib:                    ["dom", "dom.iterable", "esnext"],
-      allowJs:                true,
-      skipLibCheck:           true,
-      strict:                 true,
-      noEmit:                 true,
-      esModuleInterop:        true,
-      module:                 "esnext",
-      moduleResolution:       "bundler",
-      resolveJsonModule:      true,
-      isolatedModules:        true,
-      jsx:                    "preserve",
-      incremental:            true,
-      plugins:                [{ name: "next" }],
-      paths:                  { "@/*": ["./src/*"] },
+      lib: ["dom", "dom.iterable", "esnext"],
+      allowJs: true,
+      skipLibCheck: true,
+      strict: true,
+      noEmit: true,
+      esModuleInterop: true,
+      module: "esnext",
+      moduleResolution: "bundler",
+      resolveJsonModule: true,
+      isolatedModules: true,
+      jsx: "preserve",
+      incremental: true,
+      plugins: [{ name: "next" }],
+      paths: { "@/*": ["./src/*"] },
     },
     include: ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
     exclude: ["node_modules"],
   }, null, 2));
 
-  // ── next.config.ts ────────────────────────────────────────────────────────
-  write(path.join(root, "next.config.ts"), `import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+  // ── next.config.mjs ───────────────────────────────────────────────────────
+  write(path.join(root, "next.config.mjs"), `/** @type {import('next').NextConfig} */
+const nextConfig = {
   images: {
     remotePatterns: [],
   },
@@ -939,28 +938,28 @@ function scaffoldReactVite(root, name, opts) {
     private: true,
     type: "module",
     scripts: {
-      dev:     "vite",
-      build:   "tsc && vite build",
+      dev: "vite",
+      build: "tsc && vite build",
       preview: "vite preview",
-      lint:    "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+      lint: "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     },
     dependencies: {
-      react:            "^18",
-      "react-dom":      "^18",
+      react: "^18",
+      "react-dom": "^18",
       "react-router-dom": "^6",
       ...(opts.firebase ? { firebase: "^10.12.2" } : {}),
     },
     devDependencies: {
-      "@types/react":             "^18",
-      "@types/react-dom":         "^18",
-      "@vitejs/plugin-react":     "^4",
-      typescript:                 "^5",
-      vite:                       "^5",
-      eslint:                     "^8",
+      "@types/react": "^18",
+      "@types/react-dom": "^18",
+      "@vitejs/plugin-react": "^4",
+      typescript: "^5",
+      vite: "^5",
+      eslint: "^8",
       "eslint-plugin-comment-cleaner": "^1.1.0",
       ...(opts.tailwind ? {
-        tailwindcss:  "^3.4.1",
-        postcss:      "^8",
+        tailwindcss: "^3.4.1",
+        postcss: "^8",
         autoprefixer: "^10.0.1",
       } : {}),
     },
@@ -969,34 +968,34 @@ function scaffoldReactVite(root, name, opts) {
   // ── tsconfig.json ─────────────────────────────────────────────────────────
   write(path.join(root, "tsconfig.json"), JSON.stringify({
     compilerOptions: {
-      target:                   "ES2020",
-      useDefineForClassFields:  true,
-      lib:                      ["ES2020", "DOM", "DOM.Iterable"],
-      module:                   "ESNext",
-      skipLibCheck:             true,
-      moduleResolution:         "bundler",
+      target: "ES2020",
+      useDefineForClassFields: true,
+      lib: ["ES2020", "DOM", "DOM.Iterable"],
+      module: "ESNext",
+      skipLibCheck: true,
+      moduleResolution: "bundler",
       allowImportingTsExtensions: true,
-      resolveJsonModule:        true,
-      isolatedModules:          true,
-      noEmit:                   true,
-      jsx:                      "react-jsx",
-      strict:                   true,
-      noUnusedLocals:           true,
-      noUnusedParameters:       true,
+      resolveJsonModule: true,
+      isolatedModules: true,
+      noEmit: true,
+      jsx: "react-jsx",
+      strict: true,
+      noUnusedLocals: true,
+      noUnusedParameters: true,
       noFallthroughCasesInSwitch: true,
-      baseUrl:                  ".",
-      paths:                    { "@/*": ["./src/*"] },
+      baseUrl: ".",
+      paths: { "@/*": ["./src/*"] },
     },
-    include:    ["src"],
+    include: ["src"],
     references: [{ path: "./tsconfig.node.json" }],
   }, null, 2));
 
   write(path.join(root, "tsconfig.node.json"), JSON.stringify({
     compilerOptions: {
-      composite:                  true,
-      skipLibCheck:               true,
-      module:                     "ESNext",
-      moduleResolution:           "bundler",
+      composite: true,
+      skipLibCheck: true,
+      module: "ESNext",
+      moduleResolution: "bundler",
       allowSyntheticDefaultImports: true,
     },
     include: ["vite.config.ts"],
@@ -1788,7 +1787,7 @@ npx eslint ./src --fix # auto-remove commented-out code
 // NODE.JS API SCAFFOLD
 // ═════════════════════════════════════════════════════════════════════════════
 function scaffoldNodeApi(root, name, opts) {
-  ["src/routes","src/controllers","src/middleware","src/models","src/services","src/utils","src/types","src/config","src/constants","tests"].forEach(d => mkdir(path.join(root, d)));
+  ["src/routes", "src/controllers", "src/middleware", "src/models", "src/services", "src/utils", "src/types", "src/config", "src/constants", "tests"].forEach(d => mkdir(path.join(root, d)));
   if (opts.firebase) mkdir(path.join(root, "src/lib/firebase"));
 
   write(path.join(root, "package.json"), JSON.stringify({ name, version: "0.1.0", private: true, scripts: { dev: "ts-node-dev --respawn --transpile-only src/index.ts", build: "tsc", start: "node dist/index.js", lint: "eslint src --ext .ts" }, dependencies: { express: "^4.18", cors: "^2.8", dotenv: "^16", helmet: "^7", "express-rate-limit": "^7", ...(opts.firebase ? { "firebase-admin": "^12" } : {}) }, devDependencies: { "@types/express": "^4.17", "@types/cors": "^2.8", "@types/node": "^20", typescript: "^5", "ts-node-dev": "^2", eslint: "^8", "@typescript-eslint/eslint-plugin": "^6", "@typescript-eslint/parser": "^6", "eslint-plugin-comment-cleaner": "^1.1.0" } }, null, 2));
@@ -1805,15 +1804,15 @@ function parseArgs(argv) {
   const opts = { name: null, stack: null, tailwind: false, firebase: false, install: true, help: false };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
-    if (a === "-h" || a === "--help")   opts.help = true;
+    if (a === "-h" || a === "--help") opts.help = true;
     else if (a === "-i" || a === "--interactive") opts.interactive = true;
-    else if (a === "--next")            opts.stack = "next";
-    else if (a === "--react")           opts.stack = "react";
-    else if (a === "--node")            opts.stack = "node";
-    else if (a === "--tailwind")        opts.tailwind = true;
-    else if (a === "--firebase")        opts.firebase = true;
-    else if (a === "--no-install")      opts.install = false;
-    else if (!a.startsWith("-"))        opts.name = a;
+    else if (a === "--next") opts.stack = "next";
+    else if (a === "--react") opts.stack = "react";
+    else if (a === "--node") opts.stack = "node";
+    else if (a === "--tailwind") opts.tailwind = true;
+    else if (a === "--firebase") opts.firebase = true;
+    else if (a === "--no-install") opts.install = false;
+    else if (!a.startsWith("-")) opts.name = a;
   }
   return opts;
 }
@@ -1868,15 +1867,15 @@ async function main() {
     opts.stack = stackChoice.startsWith("Next") ? "next" : stackChoice.startsWith("React") ? "react" : "node";
     if (opts.stack !== "node") opts.tailwind = await askYesNo(rl, "Include Tailwind CSS?");
     opts.firebase = await askYesNo(rl, "Include Firebase?");
-    opts.install  = await askYesNo(rl, "Run npm install now?");
+    opts.install = await askYesNo(rl, "Run npm install now?");
   }
   rl.close();
 
-  if (!opts.name)  { log(paint(c.red, "\n  ❌ Project name required.\n")); printHelp(); process.exit(1); }
+  if (!opts.name) { log(paint(c.red, "\n  ❌ Project name required.\n")); printHelp(); process.exit(1); }
   if (!opts.stack) { log(paint(c.red, "\n  ❌ Stack required. Use --next, --react, or --node.\n")); printHelp(); process.exit(1); }
 
   const projectName = opts.name.toLowerCase().replace(/\s+/g, "-");
-  const root        = path.resolve(process.cwd(), projectName);
+  const root = path.resolve(process.cwd(), projectName);
 
   if (fs.existsSync(root)) {
     log(paint(c.red, `\n  ❌ Folder "${projectName}" already exists.\n`));
@@ -1892,9 +1891,9 @@ async function main() {
   log();
 
   step("Scaffolding files...");
-  if      (opts.stack === "next")  scaffoldNextjs(root, projectName, opts);
+  if (opts.stack === "next") scaffoldNextjs(root, projectName, opts);
   else if (opts.stack === "react") scaffoldReactVite(root, projectName, opts);
-  else if (opts.stack === "node")  scaffoldNodeApi(root, projectName, opts);
+  else if (opts.stack === "node") scaffoldNodeApi(root, projectName, opts);
   ok("Files created");
 
   if (opts.install !== false) {
