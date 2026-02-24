@@ -1,13 +1,13 @@
 {
   "name": "create-em-app",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Scaffold a new project the right way — Next.js, React, or Node.js with TypeScript, Tailwind, Firebase, and ESLint pre-configured",
-  "main": "index.js",
+  "main": "src/index.js",
   "bin": {
-    "create-em-app": "./index.js"
+    "create-em-app": "./bin/create-em-app.js"
   },
   "scripts": {
-    "test": "node test.js"
+    "test": "node test/index.test.js"
   },
   "keywords": [
     "scaffold",
