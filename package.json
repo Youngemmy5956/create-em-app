@@ -1,0 +1,34 @@
+{
+  "name": "create-em-app",
+  "version": "1.0.0",
+  "description": "Scaffold a new project the right way — Next.js, React, or Node.js with TypeScript, Tailwind, Firebase, and ESLint pre-configured",
+  "main": "index.js",
+  "bin": {
+    "create-em-app": "./index.js"
+  },
+  "scripts": {
+    "test": "node test.js"
+  },
+  "keywords": [
+    "scaffold",
+    "boilerplate",
+    "nextjs",
+    "react",
+    "nodejs",
+    "typescript",
+    "tailwind",
+    "firebase",
+    "cli",
+    "create-app"
+  ],
+  "author": "Nwamini Emmanuel O <emmanuelgodwin558@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Youngemmy5956/create-em-app"
+  },
+  "homepage": "https://github.com/Youngemmy5956/create-em-app#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
