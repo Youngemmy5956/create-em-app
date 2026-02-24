@@ -1,6 +1,6 @@
 {
   "name": "create-em-app",
-  "version": "5.0.0",
+  "version": "6.0.0",
   "description": "Scaffold a new project the right way — Next.js, React, or Node.js with TypeScript, Tailwind, Firebase, and ESLint pre-configured",
   "main": "src/index.js",
   "bin": {
