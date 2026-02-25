@@ -10,7 +10,7 @@
 
 ## What it does
 
-One command and you get a complete, properly structured project — not just empty folders. Every file is pre-written, configured, and ready to run. No default boilerplate, no fish page, no placeholder garbage.
+One command and you get a complete, properly structured project — not just empty folders. Every file is pre-written, configured, and ready to run. No default boilerplate, no placeholder garbage.
 
 ---
 
@@ -23,7 +23,7 @@ npm install -g create-em-app
 Or use without installing:
 
 ```bash
-npx create-em-app my-app --next --tailwind
+npx create-em-app my-app --next --shadcn
 ```
 
 ---
@@ -32,15 +32,11 @@ npx create-em-app my-app --next --tailwind
 
 ### One-liner (fastest)
 
-Pass your project name and flags and it scaffolds everything instantly:
-
 ```bash
-create-em-app my-app --next --tailwind --firebase
+create-em-app my-app --next --shadcn --firebase
 ```
 
 ### Interactive mode (guided)
-
-No flags needed — it asks you questions step by step:
 
 ```bash
 create-em-app --interactive
@@ -56,12 +52,10 @@ It will ask:
     1. Next.js + TypeScript
     2. React + Vite + TypeScript
     3. Node.js API + Express + TypeScript
-  Include Tailwind CSS? (y/n): y
+  Include shadcn/ui + Radix UI + Lucide + Geist font? (y/n): y
   Include Firebase? (y/n): y
   Run npm install now? (y/n): y
 ```
-
-Then it scaffolds the full project, runs `npm install`, and prints your next steps.
 
 ---
 
@@ -69,16 +63,19 @@ Then it scaffolds the full project, runs `npm install`, and prints your next ste
 
 | Flag | Stack |
 |------|-------|
-| `--next` | Next.js 14, App Router, TypeScript |
+| `--next` | Next.js 14, App Router, TypeScript, Turbopack |
 | `--react` | React 18, Vite 5, React Router v6, TypeScript |
 | `--node` | Node.js, Express 4, TypeScript |
 
-### Add-ons (mix and match)
+### Add-ons
 
 | Flag | What it adds |
 |------|-------------|
-| `--tailwind` | Tailwind CSS, postcss, autoprefixer — fully configured |
+| `--shadcn` | shadcn/ui + Radix UI + Lucide React + Geist font — fully configured |
+| `--tailwind` | Tailwind CSS only (no shadcn) |
 | `--firebase` | Firebase config, Firestore converters, error helpers, `useAuth` hook |
+
+> `--shadcn` automatically includes Tailwind — no need to pass both flags.
 
 ---
 
@@ -88,11 +85,12 @@ Then it scaffolds the full project, runs `npm install`, and prints your next ste
 create-em-app <project-name> [options]
 
   -i, --interactive    Walk through setup with prompts
-  --next               Next.js 14 + TypeScript (App Router)
+  --next               Next.js 14 + TypeScript + Turbopack (App Router)
   --react              React + Vite + TypeScript
   --node               Node.js + Express + TypeScript API
-  --tailwind           Include Tailwind CSS
-  --firebase           Include Firebase setup
+  --shadcn             shadcn/ui + Radix UI + Lucide React + Geist font
+  --tailwind           Tailwind CSS only
+  --firebase           Firebase setup
   --no-install         Skip npm install
   -h, --help           Show help
 ```
@@ -102,22 +100,19 @@ create-em-app <project-name> [options]
 ## Examples
 
 ```bash
-# Next.js — full stack
-create-em-app my-shop --next --tailwind --firebase
+# Next.js — full stack with shadcn
+create-em-app my-shop --next --shadcn --firebase
 
-# Next.js — no Firebase
+# Next.js — Tailwind only
 create-em-app my-blog --next --tailwind
 
 # React + Vite — full
-create-em-app my-dashboard --react --tailwind --firebase
-
-# React + Vite — plain
-create-em-app my-site --react
+create-em-app my-dashboard --react --shadcn --firebase
 
 # Node.js API
 create-em-app my-api --node --firebase
 
-# Interactive — let it guide you
+# Interactive
 create-em-app -i
 ```
 
@@ -125,114 +120,138 @@ create-em-app -i
 
 ## What gets generated
 
-### Next.js (`--next`)
+### Next.js (`--next --shadcn --firebase`)
 
 ```
 my-app/
+├── .github/
+│   └── pull_request_template.md   ← checklist appears on every GitHub PR
 ├── src/
 │   ├── app/
-│   │   ├── globals.css          ← Tailwind directives (or plain reset)
-│   │   ├── layout.tsx           ← Root layout, imports globals.css
-│   │   ├── page.tsx             ← Your homepage (dark, clean, not the default Next.js page)
-│   │   ├── loading.tsx          ← Suspense loading state
-│   │   ├── error.tsx            ← Error boundary
-│   │   └── not-found.tsx        ← 404 page
+│   │   ├── (routes)/              ← your pages go here
+│   │   ├── globals.css            ← Tailwind + shadcn CSS variables
+│   │   ├── layout.tsx             ← Geist font wired in
+│   │   ├── page.tsx               ← custom homepage (not the default Next.js page)
+│   │   ├── loading.tsx
+│   │   ├── error.tsx
+│   │   └── not-found.tsx
 │   ├── components/
-│   │   ├── Navbar.tsx
+│   │   ├── Navbar.tsx             ← with Lucide Menu icon
 │   │   └── ui/
-│   │       ├── Button.tsx       ← primary / secondary / ghost variants
-│   │       ├── Input.tsx        ← with label + error support
-│   │       └── Card.tsx
+│   │       ├── button.tsx         ← shadcn/ui Button (all variants)
+│   │       ├── card.tsx           ← shadcn/ui Card
+│   │       ├── input.tsx          ← shadcn/ui Input
+│   │       └── badge.tsx          ← shadcn/ui Badge
 │   ├── hooks/
 │   │   └── useLocalStorage.ts
 │   ├── lib/
-│   │   ├── utils.ts             ← cn(), formatDate(), capitalize(), sleep()
-│   │   └── firebase/            ← (if --firebase)
-│   │       ├── config.ts        ← db, auth, storage exports
-│   │       ├── converters.ts    ← Generic type-safe Firestore converter
-│   │       ├── errors.ts        ← Firebase error code → readable message
+│   │   ├── utils.ts               ← cn() using clsx + tailwind-merge
+│   │   └── firebase/
+│   │       ├── config.ts          ← db, auth, storage exports
+│   │       ├── converters.ts      ← type-safe Firestore converter
+│   │       ├── errors.ts          ← Firebase error → readable message
 │   │       └── hooks/
-│   │           └── useAuth.ts   ← useAuth() hook
+│   │           └── useAuth.ts
 │   ├── services/
-│   │   └── api.ts               ← api.get / post / put / delete
+│   │   └── api.ts                 ← typed fetch wrapper
 │   ├── types/
-│   │   └── index.ts             ← ApiResponse<T>, PaginatedResponse<T>
+│   │   └── index.ts
 │   └── constants/
-│       └── index.ts             ← APP_NAME, APP_URL, ROUTES
-├── eslint.config.mjs            ← ESLint + comment-cleaner
-├── tailwind.config.ts           ← (if --tailwind)
-├── next.config.ts
+│       └── index.ts
+├── CHECKLIST.md                   ← pre-merge checklist
+├── components.json                ← shadcn/ui config
+├── tailwind.config.ts             ← with shadcn theme tokens
+├── next.config.mjs
 ├── tsconfig.json
 ├── .env.example
-├── .gitignore
-└── README.md
+└── .gitignore
 ```
 
-### React + Vite (`--react`)
+### React + Vite (`--react --shadcn --firebase`)
 
 ```
 my-app/
+├── .github/
+│   └── pull_request_template.md
 ├── src/
-│   ├── App.tsx                  ← Router wired with Navbar + routes
-│   ├── main.tsx                 ← Entry point, BrowserRouter wraps everything
-│   ├── index.css                ← Tailwind directives (if --tailwind)
+│   ├── App.tsx                    ← React Router wired up
+│   ├── main.tsx                   ← BrowserRouter wraps everything
+│   ├── index.css                  ← Tailwind + shadcn CSS variables
 │   ├── pages/
-│   │   ├── Home.tsx             ← Homepage (dark, clean, styled)
-│   │   └── NotFound.tsx         ← 404 page with back link
+│   │   ├── Home.tsx               ← styled homepage
+│   │   └── NotFound.tsx
 │   ├── components/
-│   │   ├── Navbar.tsx           ← With React Router Link
+│   │   ├── Navbar.tsx             ← with Lucide icon
 │   │   └── ui/
-│   │       ├── Button.tsx
-│   │       ├── Input.tsx
-│   │       └── Card.tsx
+│   │       ├── button.tsx
+│   │       ├── card.tsx
+│   │       ├── input.tsx
+│   │       └── badge.tsx
 │   ├── hooks/
 │   │   └── useLocalStorage.ts
 │   ├── lib/
-│   │   ├── utils.ts             ← cn(), formatDate(), capitalize(), sleep()
-│   │   └── firebase/            ← (if --firebase)
-│   │       ├── config.ts        ← db, auth, storage (uses import.meta.env)
+│   │   ├── utils.ts
+│   │   └── firebase/
+│   │       ├── config.ts          ← uses import.meta.env.VITE_*
 │   │       ├── converters.ts
 │   │       ├── errors.ts
 │   │       └── hooks/
 │   │           └── useAuth.ts
 │   ├── services/
-│   │   └── api.ts               ← api.get / post / put / delete
+│   │   └── api.ts
 │   ├── types/
 │   │   └── index.ts
 │   └── constants/
-│       └── index.ts             ← APP_NAME, ROUTES
-├── eslint.config.mjs
-├── vite.config.ts               ← @ alias configured
-├── tailwind.config.ts           ← (if --tailwind)
+│       └── index.ts
+├── CHECKLIST.md
+├── components.json
+├── tailwind.config.ts
+├── vite.config.ts                 ← @ alias configured
 ├── tsconfig.json
-├── .env.example                 ← VITE_ prefixed vars
-├── .gitignore
-└── README.md
+├── .env.example
+└── .gitignore
 ```
 
-### Node.js API (`--node`)
+### Node.js API (`--node --firebase`)
 
 ```
 my-api/
 ├── src/
-│   ├── index.ts                 ← Express app with helmet, cors, rate-limit
+│   ├── index.ts                   ← Express + helmet + cors + rate-limit
 │   ├── routes/index.ts
 │   ├── controllers/
 │   ├── middleware/
 │   │   └── errorHandler.ts
 │   ├── models/
 │   ├── services/
-│   ├── lib/firebase/            ← (if --firebase, uses firebase-admin)
-│   │   └── admin.ts             ← db, auth, storage via Admin SDK
+│   ├── lib/firebase/
+│   │   └── admin.ts               ← Firebase Admin SDK
 │   ├── types/index.ts
 │   ├── constants/index.ts
 │   └── config/index.ts
 ├── tests/
+├── CHECKLIST.md
 ├── tsconfig.json
 ├── .env.example
-├── .gitignore
-└── README.md
+└── .gitignore
 ```
+
+---
+
+## Pre-Merge Checklist
+
+Every project gets a `CHECKLIST.md` and a `.github/pull_request_template.md` automatically.
+
+The checklist covers:
+- Code quality — no commented-out code, no unused vars, no `console.log`, no hardcoded secrets
+- Structure — components in right folders, no business logic in UI, no direct API calls in components
+- UI — responsive, loading states, error states, no hardcoded colours
+- Security — no sensitive data in frontend, input validation, protected routes
+- Performance — no unnecessary re-renders, optimised images, lazy loading
+- Testing — edge cases covered, no regressions
+- Before merging — lint passes, build passes, branch up to date
+
+The PR template appears automatically on every GitHub pull request so no one can skip it.
 
 ---
 
@@ -240,44 +259,58 @@ my-api/
 
 ```bash
 cd my-app
-npm install                          # if you skipped it
-cp .env.example .env.local           # fill in Firebase keys (if used)
-npm run dev                          # start the dev server
+npm install                        # if you skipped it
+cp .env.example .env.local         # fill in Firebase keys (if used)
+npm run dev
 ```
 
-For Next.js, open http://localhost:3000
-For React + Vite, open http://localhost:5173
-For Node.js API, open http://localhost:3000/health
+- Next.js → http://localhost:3000
+- React + Vite → http://localhost:5173
+- Node.js → http://localhost:3000/health
 
 ---
 
 ## Using the components
 
-All UI components support the `@` alias so you can import from anywhere:
-
 ```tsx
-import Button from "@/components/ui/Button";
-import Input  from "@/components/ui/Input";
-import Card   from "@/components/ui/Card";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Search, User } from "lucide-react";
 
-<Button variant="primary">Submit</Button>
-<Button variant="secondary">Cancel</Button>
-<Button variant="ghost">Skip</Button>
+<Button>Submit</Button>
+<Button variant="outline">Cancel</Button>
+<Button variant="ghost" size="icon"><Search className="h-4 w-4" /></Button>
 
-<Input label="Email" type="email" placeholder="you@example.com" error="Invalid email" />
-
-<Card className="max-w-md">
-  Content goes here
+<Card>
+  <CardHeader>
+    <CardTitle>Hello</CardTitle>
+  </CardHeader>
+  <CardContent>Content here</CardContent>
 </Card>
+
+<Input placeholder="Search..." />
+<Badge variant="secondary">New</Badge>
 ```
 
 ---
 
-## Using Firebase
+## Adding more shadcn components
 
-If you used `--firebase`, config is in `src/lib/firebase/config.ts`.
+The `components.json` file is already configured so you can use the shadcn CLI directly:
 
-**Import db, auth, or storage anywhere:**
+```bash
+npx shadcn@latest add dialog
+npx shadcn@latest add dropdown-menu
+npx shadcn@latest add toast
+npx shadcn@latest add table
+```
+
+---
+
+## Firebase
+
 ```ts
 import { db, auth, storage } from "@/lib/firebase/config";
 ```
@@ -286,90 +319,54 @@ import { db, auth, storage } from "@/lib/firebase/config";
 ```tsx
 import { useAuth } from "@/lib/firebase/hooks/useAuth";
 
-function MyComponent() {
-  const { user, loading } = useAuth();
-  if (loading) return <p>Loading...</p>;
-  if (!user)   return <p>Not signed in</p>;
-  return <p>Hello {user.email}</p>;
-}
+const { user, loading } = useAuth();
 ```
 
-**Type-safe Firestore reads:**
+**Type-safe Firestore:**
 ```ts
 import { createConverter } from "@/lib/firebase/converters";
-import { doc, getDoc }     from "firebase/firestore";
-import { db }              from "@/lib/firebase/config";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase/config";
 
-interface Product {
-  id:    string;
-  name:  string;
-  price: number;
-}
+interface Product { id: string; name: string; price: number; }
 
-const productConverter = createConverter<Product>();
-const ref  = doc(db, "products", productId).withConverter(productConverter);
+const ref = doc(db, "products", id).withConverter(createConverter<Product>());
 const snap = await getDoc(ref);
-const product = snap.data(); // fully typed as Product
-```
-
-**Error messages:**
-```ts
-import { getFirebaseErrorMessage } from "@/lib/firebase/errors";
-
-try {
-  await signInWithEmailAndPassword(auth, email, password);
-} catch (err: any) {
-  const message = getFirebaseErrorMessage(err.code);
-  setError(message); // "Incorrect password." instead of raw Firebase error
-}
+const product = snap.data(); // typed as Product
 ```
 
 ---
 
-## Adding new pages (React + Vite)
+## Project structure
 
-1. Create the file in `src/pages/`:
-```tsx
-// src/pages/Dashboard.tsx
-export default function Dashboard() {
-  return <main>Dashboard</main>;
-}
 ```
-
-2. Register it in `src/App.tsx`:
-```tsx
-import Dashboard from "@/pages/Dashboard";
-
-<Route path="/dashboard" element={<Dashboard />} />
-```
-
----
-
-## Adding new pages (Next.js)
-
-Create a folder in `src/app/`:
-```
-src/app/dashboard/page.tsx
-src/app/dashboard/loading.tsx   ← optional
-```
-
----
-
-## Lint and auto-fix
-
-Every project includes [eslint-plugin-comment-cleaner](https://www.npmjs.com/package/eslint-plugin-comment-cleaner):
-
-```bash
-npm run lint              # see all issues
-npx eslint ./src --fix    # auto-delete commented-out code
+create-em-app/
+├── bin/
+│   └── create-em-app.js       ← CLI entry point
+├── src/
+│   ├── index.js               ← main orchestrator
+│   ├── scaffolders/
+│   │   ├── nextjs.js          ← Next.js scaffold logic
+│   │   ├── react.js           ← React + Vite scaffold logic
+│   │   └── node.js            ← Node.js scaffold logic
+│   ├── templates/
+│   │   ├── shared.js          ← shared code templates (Firebase, hooks, types)
+│   │   └── shadcn.js          ← shadcn/ui + Geist + Lucide templates
+│   └── utils/
+│       ├── colors.js          ← terminal colours
+│       ├── files.js           ← file write/mkdir helpers
+│       ├── prompt.js          ← interactive prompts
+│       ├── args.js            ← CLI argument parser
+│       └── checklist.js       ← pre-merge checklist generator
+└── package.json
 ```
 
 ---
 
 ## Related
 
-- [comment-cleaner CLI](https://www.npmjs.com/package/@youngemmy/comment-cleaner)
 - [eslint-plugin-comment-cleaner](https://www.npmjs.com/package/eslint-plugin-comment-cleaner)
+- [shadcn/ui](https://ui.shadcn.com)
 - [GitHub](https://github.com/Youngemmy5956/create-em-app)
 
 ---

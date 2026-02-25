@@ -4,9 +4,9 @@ const path = require("path");
 const { write, mkdir } = require("../utils/files");
 const {
   gitignore, firebaseEnvNext, firebaseConfig,
-  firebaseConverters, firebaseErrors, useLocalStorage,
-  libUtils, globalTypes,
+  firebaseConverters, firebaseErrors, useLocalStorage, globalTypes,
 } = require("../templates/shared");
+const shadcn = require("../templates/shadcn");
 
 function scaffold(root, name, opts) {
   _createFolders(root, opts);
@@ -14,7 +14,7 @@ function scaffold(root, name, opts) {
   _createAppFiles(root, name, opts);
   _createComponents(root, name, opts);
   _createLib(root, name, opts);
-  _createServices(root, name);
+  _createServices(root);
   _createHooks(root);
   _createTypes(root, opts);
   _createConstants(root, name);
@@ -24,7 +24,6 @@ function scaffold(root, name, opts) {
 function _createFolders(root, opts) {
   const dirs = [
     "src/app/(routes)",
-    "src/app/components",
     "src/components/ui",
     "src/hooks",
     "src/lib",
@@ -33,48 +32,60 @@ function _createFolders(root, opts) {
     "src/constants",
     "public/images",
     "public/icons",
+    ".github",
   ];
-  if (opts.firebase) {
-    dirs.push("src/lib/firebase/hooks");
-  }
+  if (opts.firebase) dirs.push("src/lib/firebase/hooks");
   dirs.forEach(d => mkdir(path.join(root, d)));
 }
 
 function _createConfigFiles(root, name, opts) {
-  // package.json
+  // ── package.json ────────────────────────────────────────────────────────────
   write(path.join(root, "package.json"), JSON.stringify({
     name,
     version: "0.1.0",
     private: true,
     scripts: {
-      dev:   "next dev",
+      dev: "next dev --turbopack",
       build: "next build",
       start: "next start",
-      lint:  "next lint",
+      lint: "next lint",
     },
     dependencies: {
-      next:        "14.2.3",
-      react:       "^18",
+      next: "14.2.3",
+      react: "^18",
       "react-dom": "^18",
+      // Fonts
+      geist: "^1.3.0",
+      // Icons
+      "lucide-react": "^0.400.0",
+      ...(opts.shadcn ? {
+        // shadcn/ui + Radix primitives
+        "@radix-ui/react-slot": "^1.0.2",
+        "class-variance-authority": "^0.7.0",
+        clsx: "^2.1.1",
+        "tailwind-merge": "^2.3.0",
+        "tailwindcss-animate": "^1.0.7",
+      } : {
+        clsx: "^2.1.1",
+        "tailwind-merge": "^2.3.0",
+      }),
       ...(opts.firebase ? { firebase: "^10.12.2" } : {}),
     },
     devDependencies: {
-      typescript:           "^5",
-      "@types/node":        "^20",
-      "@types/react":       "^18",
-      "@types/react-dom":   "^18",
-      eslint:               "^8",
+      typescript: "^5",
+      "@types/node": "^20",
+      "@types/react": "^18",
+      "@types/react-dom": "^18",
+      eslint: "^8",
       "eslint-config-next": "14.2.3",
       "eslint-plugin-comment-cleaner": "^1.1.0",
-      ...(opts.tailwind ? {
-        tailwindcss:  "^3.4.1",
-        postcss:      "^8",
-        autoprefixer: "^10.0.1",
-      } : {}),
+      tailwindcss: "^3.4.1",
+      postcss: "^8",
+      autoprefixer: "^10.0.1",
     },
   }, null, 2));
 
-  // tsconfig.json
+  // ── tsconfig.json ────────────────────────────────────────────────────────────
   write(path.join(root, "tsconfig.json"), JSON.stringify({
     compilerOptions: {
       lib: ["dom", "dom.iterable", "esnext"],
@@ -88,7 +99,7 @@ function _createConfigFiles(root, name, opts) {
     exclude: ["node_modules"],
   }, null, 2));
 
-  // next.config.mjs
+  // ── next.config.mjs — Turbopack enabled ──────────────────────────────────────
   write(path.join(root, "next.config.mjs"), `/** @type {import('next').NextConfig} */
 const nextConfig = {
   images: { remotePatterns: [] },
@@ -96,7 +107,7 @@ const nextConfig = {
 export default nextConfig;
 `);
 
-  // eslint.config.mjs
+  // ── eslint.config.mjs ────────────────────────────────────────────────────────
   write(path.join(root, "eslint.config.mjs"), `import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { FlatCompat } from "@eslint/eslintrc";
@@ -119,35 +130,48 @@ const eslintConfig = [
 export default eslintConfig;
 `);
 
-  // Tailwind
-  if (opts.tailwind) {
-    write(path.join(root, "tailwind.config.ts"), `import type { Config } from "tailwindcss";
+  // ── Tailwind ─────────────────────────────────────────────────────────────────
+  write(path.join(root, "tailwind.config.ts"),
+    opts.shadcn ? shadcn.tailwindConfig : `import type { Config } from "tailwindcss";
 const config: Config = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  theme: { extend: { colors: {}, fontFamily: {} } },
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ["var(--font-geist-sans)"],
+        mono: ["var(--font-geist-mono)"],
+      },
+    },
+  },
   plugins: [],
 };
 export default config;
 `);
-    write(path.join(root, "postcss.config.mjs"), `const config = { plugins: { tailwindcss: {}, autoprefixer: {} } };
-export default config;
-`);
+
+  write(path.join(root, "postcss.config.mjs"),
+    `const config = { plugins: { tailwindcss: {}, autoprefixer: {} } };\nexport default config;\n`);
+
+  // ── components.json (shadcn) ─────────────────────────────────────────────────
+  if (opts.shadcn) {
+    write(path.join(root, "components.json"), shadcn.componentsJson(name));
   }
 }
 
 function _createAppFiles(root, name, opts) {
-  // globals.css
-  write(path.join(root, "src/app/globals.css"), opts.tailwind
-    ? `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n* { box-sizing: border-box; }\nbody { min-height: 100vh; }\n`
-    : `* { box-sizing: border-box; padding: 0; margin: 0; }\nbody { min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }\n`
+  // ── globals.css ───────────────────────────────────────────────────────────────
+  write(path.join(root, "src/app/globals.css"),
+    opts.shadcn ? shadcn.globalsCss : `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n* { box-sizing: border-box; }\nbody { min-height: 100vh; }\n`
   );
 
-  // layout.tsx
-  write(path.join(root, "src/app/layout.tsx"), `import type { Metadata } from "next";
+  // ── layout.tsx — Geist font wired in ─────────────────────────────────────────
+  write(path.join(root, "src/app/layout.tsx"),
+    opts.shadcn ? shadcn.layoutTsx(name) : `import type { Metadata } from "next";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -157,101 +181,104 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" className={\`\${GeistSans.variable} \${GeistMono.variable}\`}>
+      <body className="min-h-screen font-sans antialiased">{children}</body>
     </html>
   );
 }
 `);
 
-  // page.tsx — custom homepage
-  write(path.join(root, "src/app/page.tsx"), opts.tailwind
-    ? `export default function Home() {
+  // ── page.tsx — custom homepage ────────────────────────────────────────────────
+  write(path.join(root, "src/app/page.tsx"),
+    opts.shadcn ? shadcn.pageTsx(name) : `export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gray-950 text-white px-6">
+    <main className="min-h-screen flex flex-col items-center justify-center px-6">
       <div className="text-center max-w-xl">
         <h1 className="text-5xl font-bold tracking-tight mb-4">${name}</h1>
-        <p className="text-gray-400 text-lg mb-8">Your project is ready. Start building.</p>
+        <p className="text-muted-foreground text-lg mb-8">Your project is ready. Start building.</p>
         <div className="flex gap-4 justify-center">
-          <a href="/dashboard" className="bg-white text-gray-950 font-semibold px-6 py-3 rounded-lg hover:bg-gray-200 transition">Get started</a>
-          <a href="https://nextjs.org/docs" target="_blank" rel="noopener noreferrer" className="border border-gray-700 text-gray-300 font-semibold px-6 py-3 rounded-lg hover:border-gray-400 transition">Docs →</a>
+          <a href="/dashboard" className="bg-foreground text-background font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition">Get started</a>
+          <a href="https://nextjs.org/docs" target="_blank" rel="noopener noreferrer" className="border font-semibold px-6 py-3 rounded-lg hover:bg-accent transition">Docs →</a>
         </div>
       </div>
     </main>
   );
 }
-`
-    : `export default function Home() {
-  return (
-    <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a", color: "#fff" }}>
-      <div style={{ textAlign: "center" }}>
-        <h1 style={{ fontSize: "3rem", fontWeight: 700, marginBottom: "1rem" }}>${name}</h1>
-        <p style={{ color: "#888" }}>Your project is ready. Start building.</p>
-      </div>
-    </main>
-  );
-}
 `);
 
-  // loading, error, not-found
-  write(path.join(root, "src/app/loading.tsx"), opts.tailwind
-    ? `export default function Loading() {\n  return <div className="min-h-screen flex items-center justify-center bg-gray-950"><div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" /></div>;\n}\n`
-    : `export default function Loading() {\n  return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}><p>Loading...</p></div>;\n}\n`
+  // ── loading.tsx ───────────────────────────────────────────────────────────────
+  write(path.join(root, "src/app/loading.tsx"),
+    `export default function Loading() {\n  return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-4 border-foreground border-t-transparent rounded-full animate-spin" /></div>;\n}\n`
   );
 
-  write(path.join(root, "src/app/not-found.tsx"), opts.tailwind
-    ? `export default function NotFound() {\n  return <main className="min-h-screen flex flex-col items-center justify-center bg-gray-950 text-white"><h1 className="text-6xl font-bold mb-4">404</h1><p className="text-gray-400 mb-6">Page not found.</p><a href="/" className="text-blue-400 hover:underline">Go home</a></main>;\n}\n`
-    : `export default function NotFound() {\n  return <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}><h1>404</h1><a href="/">Go home</a></main>;\n}\n`
+  // ── not-found.tsx ─────────────────────────────────────────────────────────────
+  write(path.join(root, "src/app/not-found.tsx"),
+    `export default function NotFound() {\n  return <main className="min-h-screen flex flex-col items-center justify-center"><h1 className="text-6xl font-bold mb-4">404</h1><p className="text-muted-foreground mb-6">Page not found.</p><a href="/" className="underline">Go home</a></main>;\n}\n`
   );
 
-  write(path.join(root, "src/app/error.tsx"), `"use client";
-import { useEffect } from "react";
-export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  useEffect(() => { console.error(error); }, [error]);
-  return (
-    <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-      <h2>Something went wrong</h2>
-      <button onClick={reset}>Try again</button>
-    </main>
+  // ── error.tsx ─────────────────────────────────────────────────────────────────
+  write(path.join(root, "src/app/error.tsx"),
+    `"use client";\nimport { useEffect } from "react";\nexport default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {\n  useEffect(() => { console.error(error); }, [error]);\n  return <main className="min-h-screen flex flex-col items-center justify-center gap-4"><h2 className="text-2xl font-semibold">Something went wrong</h2><button onClick={reset} className="underline">Try again</button></main>;\n}\n`
   );
-}
-`);
 }
 
 function _createComponents(root, name, opts) {
-  // Navbar
-  write(path.join(root, "src/components/Navbar.tsx"), opts.tailwind
-    ? `import Link from "next/link";\nexport default function Navbar() {\n  return <nav className="border-b border-gray-800 px-6 py-4 flex items-center justify-between"><Link href="/" className="font-bold text-lg text-white">${name}</Link><div className="flex gap-6 text-sm text-gray-400"><Link href="/" className="hover:text-white transition">Home</Link></div></nav>;\n}\n`
-    : `import Link from "next/link";\nexport default function Navbar() {\n  return <nav style={{ borderBottom: "1px solid #2a2a2a", padding: "1rem 1.5rem", display: "flex", justifyContent: "space-between" }}><Link href="/" style={{ fontWeight: 700, color: "#fff" }}>${name}</Link></nav>;\n}\n`
+  // ── Navbar ────────────────────────────────────────────────────────────────────
+  write(path.join(root, "src/components/Navbar.tsx"),
+    opts.shadcn ? shadcn.navbarTsx(name) : `import Link from "next/link";
+export default function Navbar() {
+  return (
+    <nav className="border-b px-6 py-4 flex items-center justify-between bg-background">
+      <Link href="/" className="font-bold text-lg">${name}</Link>
+      <div className="flex gap-6 text-sm text-muted-foreground">
+        <Link href="/" className="hover:text-foreground transition">Home</Link>
+      </div>
+    </nav>
   );
+}
+`);
 
-  // Button
-  write(path.join(root, "src/components/ui/Button.tsx"), opts.tailwind
-    ? `import { ButtonHTMLAttributes } from "react";\nimport { cn } from "@/lib/utils";\n\ninterface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {\n  variant?: "primary" | "secondary" | "ghost";\n  size?: "sm" | "md" | "lg";\n}\n\nexport default function Button({ children, variant = "primary", size = "md", className, ...props }: ButtonProps) {\n  const base = "inline-flex items-center justify-center font-semibold rounded-lg transition focus:outline-none disabled:opacity-50";\n  const variants = { primary: "bg-white text-gray-950 hover:bg-gray-200", secondary: "border border-gray-700 text-gray-300 hover:border-gray-400", ghost: "text-gray-400 hover:text-white" };\n  const sizes = { sm: "px-3 py-1.5 text-sm", md: "px-5 py-2.5 text-sm", lg: "px-7 py-3 text-base" };\n  return <button className={cn(base, variants[variant], sizes[size], className)} {...props}>{children}</button>;\n}\n`
-    : `import { ButtonHTMLAttributes } from "react";\ninterface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> { variant?: "primary" | "secondary"; }\nexport default function Button({ children, variant = "primary", ...props }: ButtonProps) {\n  return <button style={{ padding: "0.6rem 1.4rem", borderRadius: "8px", fontWeight: 600, cursor: "pointer", background: variant === "primary" ? "#fff" : "transparent", color: variant === "primary" ? "#000" : "#fff", border: variant === "secondary" ? "1px solid #444" : "none" }} {...props}>{children}</button>;\n}\n`
-  );
-
-  // Input
-  write(path.join(root, "src/components/ui/Input.tsx"), opts.tailwind
-    ? `import { InputHTMLAttributes } from "react";\nimport { cn } from "@/lib/utils";\ninterface InputProps extends InputHTMLAttributes<HTMLInputElement> { label?: string; error?: string; }\nexport default function Input({ label, error, className, ...props }: InputProps) {\n  return <div className="flex flex-col gap-1">{label && <label className="text-sm font-medium text-gray-300">{label}</label>}<input className={cn("w-full px-4 py-2.5 rounded-lg bg-gray-900 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-gray-400 transition", error && "border-red-500", className)} {...props} />{error && <p className="text-xs text-red-400">{error}</p>}</div>;\n}\n`
-    : `import { InputHTMLAttributes } from "react";\ninterface InputProps extends InputHTMLAttributes<HTMLInputElement> { label?: string; error?: string; }\nexport default function Input({ label, error, ...props }: InputProps) {\n  return <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>{label && <label style={{ fontSize: "0.85rem", color: "#ccc" }}>{label}</label>}<input style={{ padding: "0.6rem 1rem", borderRadius: "8px", background: "#1a1a1a", border: "1px solid #333", color: "#fff" }} {...props} />{error && <p style={{ fontSize: "0.75rem", color: "#f87171" }}>{error}</p>}</div>;\n}\n`
-  );
-
-  // Card
-  write(path.join(root, "src/components/ui/Card.tsx"), opts.tailwind
-    ? `import { HTMLAttributes } from "react";\nimport { cn } from "@/lib/utils";\ninterface CardProps extends HTMLAttributes<HTMLDivElement> {}\nexport default function Card({ children, className, ...props }: CardProps) {\n  return <div className={cn("bg-gray-900 border border-gray-800 rounded-xl p-6", className)} {...props}>{children}</div>;\n}\n`
-    : `import { HTMLAttributes } from "react";\nexport default function Card({ children, ...props }: HTMLAttributes<HTMLDivElement>) {\n  return <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "12px", padding: "1.5rem" }} {...props}>{children}</div>;\n}\n`
-  );
+  if (opts.shadcn) {
+    // Pre-built shadcn/ui components — no need to run npx shadcn add
+    write(path.join(root, "src/components/ui/button.tsx"), shadcn.buttonComponent);
+    write(path.join(root, "src/components/ui/card.tsx"), shadcn.cardComponent);
+    write(path.join(root, "src/components/ui/input.tsx"), shadcn.inputComponent);
+    write(path.join(root, "src/components/ui/badge.tsx"), shadcn.badgeComponent);
+  } else {
+    // Plain Tailwind components
+    write(path.join(root, "src/components/ui/Button.tsx"), `import { ButtonHTMLAttributes } from "react";\nimport { cn } from "@/lib/utils";\ninterface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> { variant?: "primary" | "secondary" | "ghost"; size?: "sm" | "md" | "lg"; }\nexport default function Button({ children, variant = "primary", size = "md", className, ...props }: ButtonProps) {\n  const base = "inline-flex items-center justify-center font-semibold rounded-lg transition focus:outline-none disabled:opacity-50";\n  const variants = { primary: "bg-foreground text-background hover:opacity-90", secondary: "border hover:bg-accent", ghost: "text-muted-foreground hover:text-foreground" };\n  const sizes = { sm: "px-3 py-1.5 text-sm", md: "px-5 py-2.5 text-sm", lg: "px-7 py-3 text-base" };\n  return <button className={cn(base, variants[variant], sizes[size], className)} {...props}>{children}</button>;\n}\n`);
+    write(path.join(root, "src/components/ui/Input.tsx"), `import { InputHTMLAttributes } from "react";\nimport { cn } from "@/lib/utils";\ninterface InputProps extends InputHTMLAttributes<HTMLInputElement> { label?: string; error?: string; }\nexport default function Input({ label, error, className, ...props }: InputProps) {\n  return <div className="flex flex-col gap-1">{label && <label className="text-sm font-medium">{label}</label>}<input className={cn("w-full px-4 py-2.5 rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-ring transition", error && "border-destructive", className)} {...props} />{error && <p className="text-xs text-destructive">{error}</p>}</div>;\n}\n`);
+    write(path.join(root, "src/components/ui/Card.tsx"), `import { HTMLAttributes } from "react";\nimport { cn } from "@/lib/utils";\nexport default function Card({ children, className, ...props }: HTMLAttributes<HTMLDivElement>) {\n  return <div className={cn("rounded-lg border bg-card text-card-foreground shadow-sm p-6", className)} {...props}>{children}</div>;\n}\n`);
+  }
 }
 
 function _createLib(root, name, opts) {
-  write(path.join(root, "src/lib/utils.ts"), libUtils);
+  // lib/utils.ts — uses clsx + tailwind-merge (shadcn standard)
+  write(path.join(root, "src/lib/utils.ts"),
+    opts.shadcn ? shadcn.libUtils : `import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+export function formatDate(date: Date | string): string {
+  return new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+}
+
+export function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+`);
 
   if (opts.firebase) {
-    write(path.join(root, "src/lib/firebase/config.ts"),
-      firebaseConfig("process.env.NEXT_PUBLIC_"));
+    write(path.join(root, "src/lib/firebase/config.ts"), firebaseConfig("process.env.NEXT_PUBLIC_"));
     write(path.join(root, "src/lib/firebase/converters.ts"), firebaseConverters);
-    write(path.join(root, "src/lib/firebase/errors.ts"),     firebaseErrors);
+    write(path.join(root, "src/lib/firebase/errors.ts"), firebaseErrors);
     write(path.join(root, "src/lib/firebase/hooks/useAuth.ts"), `"use client";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
@@ -270,7 +297,7 @@ export function useAuth() {
   }
 }
 
-function _createServices(root, name) {
+function _createServices(root) {
   write(path.join(root, "src/services/api.ts"), `const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
 
 async function request<T>(endpoint: string, options?: RequestInit): Promise<{ data: T | null; error: string | null }> {
@@ -278,7 +305,7 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<{ da
     const res = await fetch(\`\${BASE_URL}\${endpoint}\`, { headers: { "Content-Type": "application/json" }, ...options });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      return { data: null, error: body.message ?? \`Error \${res.status}\` };
+      return { data: null, error: (body as { message?: string }).message ?? \`Error \${res.status}\` };
     }
     return { data: await res.json() as T, error: null };
   } catch (err) {
@@ -319,7 +346,7 @@ export const ROUTES = {
 function _createEnvAndDocs(root, name, opts) {
   write(path.join(root, ".gitignore"), gitignore);
   write(path.join(root, ".env.example"), `NEXT_PUBLIC_APP_NAME="${name}"\nNEXT_PUBLIC_APP_URL="http://localhost:3000"\n${opts.firebase ? firebaseEnvNext : ""}`);
-  write(path.join(root, "README.md"), `# ${name}\n\n> Scaffolded with [create-em-app](https://github.com/Youngemmy5956/create-em-app)\n\n## Getting Started\n\n\`\`\`bash\nnpm install\n${opts.firebase ? "cp .env.example .env.local\n" : ""}npm run dev\n\`\`\`\n`);
+  write(path.join(root, "README.md"), `# ${name}\n\n> Scaffolded with [create-em-app](https://github.com/Youngemmy5956/create-em-app)\n\n## Stack\n\n- Next.js 14 + Turbopack\n- TypeScript\n- Tailwind CSS\n- Geist Font${opts.shadcn ? "\n- shadcn/ui + Radix UI\n- Lucide React" : "\n- Lucide React"}${opts.firebase ? "\n- Firebase" : ""}\n\n## Getting Started\n\n\`\`\`bash\nnpm install\n${opts.firebase ? "cp .env.example .env.local\n" : ""}npm run dev\n\`\`\`\n\n## Before merging any PR, check \`CHECKLIST.md\`\n`);
 }
 
 module.exports = { scaffold };

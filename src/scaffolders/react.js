@@ -4,8 +4,9 @@ const path = require("path");
 const { write, mkdir } = require("../utils/files");
 const {
   gitignore, firebaseEnvVite, firebaseConverters,
-  firebaseErrors, useLocalStorage, libUtils, globalTypes,
+  firebaseErrors, useLocalStorage, globalTypes,
 } = require("../templates/shared");
+const shadcn = require("../templates/shadcn");
 
 function scaffold(root, name, opts) {
   _createFolders(root, opts);
@@ -32,24 +33,54 @@ function _createFolders(root, opts) {
     "src/constants",
     "src/assets",
     "public",
+    ".github",
   ];
   if (opts.firebase) dirs.push("src/lib/firebase/hooks");
   dirs.forEach(d => mkdir(path.join(root, d)));
 }
 
 function _createConfigFiles(root, name, opts) {
+  // ── package.json ──────────────────────────────────────────────────────────
   write(path.join(root, "package.json"), JSON.stringify({
     name, version: "0.1.0", private: true, type: "module",
-    scripts: { dev: "vite", build: "tsc && vite build", preview: "vite preview", lint: "eslint . --ext ts,tsx" },
-    dependencies: { react: "^18", "react-dom": "^18", "react-router-dom": "^6", ...(opts.firebase ? { firebase: "^10.12.2" } : {}) },
+    scripts: {
+      dev: "vite",
+      build: "tsc && vite build",
+      preview: "vite preview",
+      lint: "eslint . --ext ts,tsx",
+    },
+    dependencies: {
+      react: "^18",
+      "react-dom": "^18",
+      "react-router-dom": "^6",
+      "lucide-react": "^0.400.0",
+      ...(opts.shadcn ? {
+        "@radix-ui/react-slot": "^1.0.2",
+        "class-variance-authority": "^0.7.0",
+        clsx: "^2.1.1",
+        "tailwind-merge": "^2.3.0",
+        "tailwindcss-animate": "^1.0.7",
+      } : {
+        clsx: "^2.1.1",
+        "tailwind-merge": "^2.3.0",
+      }),
+      ...(opts.firebase ? { firebase: "^10.12.2" } : {}),
+    },
     devDependencies: {
-      "@types/react": "^18", "@types/react-dom": "^18", "@vitejs/plugin-react": "^4",
-      typescript: "^5", vite: "^5", eslint: "^8",
+      "@types/react": "^18",
+      "@types/react-dom": "^18",
+      "@vitejs/plugin-react": "^4",
+      typescript: "^5",
+      vite: "^5",
+      eslint: "^8",
       "eslint-plugin-comment-cleaner": "^1.1.0",
-      ...(opts.tailwind ? { tailwindcss: "^3.4.1", postcss: "^8", autoprefixer: "^10.0.1" } : {}),
+      tailwindcss: "^3.4.1",
+      postcss: "^8",
+      autoprefixer: "^10.0.1",
     },
   }, null, 2));
 
+  // ── tsconfig.json ─────────────────────────────────────────────────────────
   write(path.join(root, "tsconfig.json"), JSON.stringify({
     compilerOptions: {
       target: "ES2020", useDefineForClassFields: true,
@@ -68,28 +99,98 @@ function _createConfigFiles(root, name, opts) {
     include: ["vite.config.ts"],
   }, null, 2));
 
+  // ── vite.config.ts ────────────────────────────────────────────────────────
   write(path.join(root, "vite.config.ts"), `import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-export default defineConfig({ plugins: [react()], resolve: { alias: { "@": path.resolve(__dirname, "./src") } } });
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: { alias: { "@": path.resolve(__dirname, "./src") } },
+});
 `);
 
+  // ── eslint.config.mjs ─────────────────────────────────────────────────────
   write(path.join(root, "eslint.config.mjs"), `import commentCleaner from "eslint-plugin-comment-cleaner";
-export default [{ plugins: { "comment-cleaner": commentCleaner }, rules: { "comment-cleaner/no-commented-code": "warn", "comment-cleaner/no-commented-imports": "warn" } }];
+export default [{
+  plugins: { "comment-cleaner": commentCleaner },
+  rules: {
+    "comment-cleaner/no-commented-code":    "warn",
+    "comment-cleaner/no-commented-imports": "warn",
+  },
+}];
 `);
 
-  if (opts.tailwind) {
-    write(path.join(root, "tailwind.config.ts"), `import type { Config } from "tailwindcss";\nconst config: Config = { content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"], theme: { extend: {} }, plugins: [] };\nexport default config;\n`);
-    write(path.join(root, "postcss.config.mjs"), `export default { plugins: { tailwindcss: {}, autoprefixer: {} } };\n`);
-    write(path.join(root, "src/index.css"), `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n* { box-sizing: border-box; }\nbody { min-height: 100vh; margin: 0; }\n`);
-  }
+  // ── Tailwind ──────────────────────────────────────────────────────────────
+  write(path.join(root, "tailwind.config.ts"),
+    opts.shadcn ? shadcn.tailwindConfig.replace(
+      // React uses different content paths
+      `"./src/pages/**/*.{js,ts,jsx,tsx,mdx}",\n    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",\n    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",`,
+      `"./index.html",\n    "./src/**/*.{js,ts,jsx,tsx}",`
+    ) : `import type { Config } from "tailwindcss";
+const config: Config = {
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      fontFamily: { sans: ["Geist", "sans-serif"], mono: ["Geist Mono", "monospace"] },
+    },
+  },
+  plugins: [],
+};
+export default config;
+`);
 
-  write(path.join(root, "index.html"), `<!DOCTYPE html>\n<html lang="en">\n  <head>\n    <meta charset="UTF-8" />\n    <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n    <title>${name}</title>\n  </head>\n  <body>\n    <div id="root"></div>\n    <script type="module" src="/src/main.tsx"></script>\n  </body>\n</html>\n`);
+  write(path.join(root, "postcss.config.mjs"), `export default { plugins: { tailwindcss: {}, autoprefixer: {} } };\n`);
+
+  // ── globals css ───────────────────────────────────────────────────────────
+  write(path.join(root, "src/index.css"),
+    opts.shadcn ? shadcn.globalsCss : `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n* { box-sizing: border-box; }\nbody { min-height: 100vh; margin: 0; }\n`
+  );
+
+  // ── index.html ────────────────────────────────────────────────────────────
+  write(path.join(root, "index.html"), `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${name}</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+`);
+
+  // ── components.json (shadcn) ──────────────────────────────────────────────
+  if (opts.shadcn) {
+    write(path.join(root, "components.json"), JSON.stringify({
+      "$schema": "https://ui.shadcn.com/schema.json",
+      "style": "default", "rsc": false, "tsx": true,
+      "tailwind": { "config": "tailwind.config.ts", "css": "src/index.css", "baseColor": "neutral", "cssVariables": true },
+      "aliases": { "components": "@/components", "utils": "@/lib/utils", "ui": "@/components/ui", "lib": "@/lib", "hooks": "@/hooks" },
+    }, null, 2));
+  }
 }
 
 function _createAppFiles(root, name, opts) {
-  write(path.join(root, "src/main.tsx"), `import React from "react";\nimport ReactDOM from "react-dom/client";\nimport { BrowserRouter } from "react-router-dom";\nimport App from "./App";\n${opts.tailwind ? `import "./index.css";\n` : ""}ReactDOM.createRoot(document.getElementById("root")!).render(<React.StrictMode><BrowserRouter><App /></BrowserRouter></React.StrictMode>);\n`);
+  // ── main.tsx ───────────────────────────────────────────────────────────────
+  write(path.join(root, "src/main.tsx"), `import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import App from "./App";
+import "./index.css";
 
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </React.StrictMode>
+);
+`);
+
+  // ── App.tsx ────────────────────────────────────────────────────────────────
   write(path.join(root, "src/App.tsx"), `import { Routes, Route } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Home from "@/pages/Home";
@@ -100,8 +201,8 @@ export default function App() {
     <>
       <Navbar />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="*" element={<NotFound />} />
+        <Route path="/"  element={<Home />} />
+        <Route path="*"  element={<NotFound />} />
       </Routes>
     </>
   );
@@ -110,41 +211,127 @@ export default function App() {
 }
 
 function _createPages(root, name, opts) {
-  write(path.join(root, "src/pages/Home.tsx"), opts.tailwind
-    ? `export default function Home() {\n  return <main className="min-h-screen flex flex-col items-center justify-center bg-gray-950 text-white px-6"><div className="text-center max-w-xl"><h1 className="text-5xl font-bold tracking-tight mb-4">${name}</h1><p className="text-gray-400 text-lg mb-8">Your project is ready. Start building.</p><div className="flex gap-4 justify-center"><a href="/dashboard" className="bg-white text-gray-950 font-semibold px-6 py-3 rounded-lg hover:bg-gray-200 transition">Get started</a><a href="https://vitejs.dev" target="_blank" rel="noopener noreferrer" className="border border-gray-700 text-gray-300 font-semibold px-6 py-3 rounded-lg hover:border-gray-400 transition">Docs →</a></div></div></main>;\n}\n`
-    : `export default function Home() {\n  return <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a", color: "#fff" }}><div style={{ textAlign: "center" }}><h1 style={{ fontSize: "3rem", fontWeight: 700 }}>${name}</h1><p style={{ color: "#888" }}>Your project is ready.</p></div></main>;\n}\n`
-  );
+  // ── Home.tsx ──────────────────────────────────────────────────────────────
+  write(path.join(root, "src/pages/Home.tsx"), opts.shadcn
+    ? `import { Button } from "@/components/ui/button";
 
-  write(path.join(root, "src/pages/NotFound.tsx"), opts.tailwind
-    ? `import { Link } from "react-router-dom";\nexport default function NotFound() {\n  return <main className="min-h-screen flex flex-col items-center justify-center bg-gray-950 text-white"><h1 className="text-6xl font-bold mb-4">404</h1><p className="text-gray-400 mb-6">Page not found.</p><Link to="/" className="text-blue-400 hover:underline">Go home</Link></main>;\n}\n`
-    : `import { Link } from "react-router-dom";\nexport default function NotFound() {\n  return <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}><h1>404</h1><Link to="/">Go home</Link></main>;\n}\n`
+export default function Home() {
+  return (
+    <main className="min-h-screen flex flex-col items-center justify-center gap-6 px-6">
+      <div className="text-center max-w-xl">
+        <h1 className="text-5xl font-bold tracking-tight mb-4">${name}</h1>
+        <p className="text-muted-foreground text-lg mb-8">Your project is ready. Start building.</p>
+        <div className="flex gap-4 justify-center">
+          <Button asChild>
+            <a href="/dashboard">Get started</a>
+          </Button>
+          <Button variant="outline" asChild>
+            <a href="https://vitejs.dev" target="_blank" rel="noopener noreferrer">Docs →</a>
+          </Button>
+        </div>
+      </div>
+    </main>
   );
+}
+`
+    : `export default function Home() {
+  return (
+    <main className="min-h-screen flex flex-col items-center justify-center px-6">
+      <div className="text-center max-w-xl">
+        <h1 className="text-5xl font-bold tracking-tight mb-4">${name}</h1>
+        <p className="text-lg mb-8 opacity-60">Your project is ready. Start building.</p>
+        <div className="flex gap-4 justify-center">
+          <a href="/dashboard" className="bg-foreground text-background font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition">Get started</a>
+          <a href="https://vitejs.dev" target="_blank" rel="noopener noreferrer" className="border font-semibold px-6 py-3 rounded-lg hover:bg-accent transition">Docs →</a>
+        </div>
+      </div>
+    </main>
+  );
+}
+`);
+
+  // ── NotFound.tsx ──────────────────────────────────────────────────────────
+  write(path.join(root, "src/pages/NotFound.tsx"), `import { Link } from "react-router-dom";
+export default function NotFound() {
+  return (
+    <main className="min-h-screen flex flex-col items-center justify-center">
+      <h1 className="text-6xl font-bold mb-4">404</h1>
+      <p className="text-muted-foreground mb-6">Page not found.</p>
+      <Link to="/" className="underline">Go home</Link>
+    </main>
+  );
+}
+`);
 }
 
 function _createComponents(root, name, opts) {
-  write(path.join(root, "src/components/Navbar.tsx"), opts.tailwind
-    ? `import { Link } from "react-router-dom";\nexport default function Navbar() {\n  return <nav className="border-b border-gray-800 px-6 py-4 flex items-center justify-between bg-gray-950"><Link to="/" className="font-bold text-lg text-white">${name}</Link><div className="flex gap-6 text-sm text-gray-400"><Link to="/" className="hover:text-white transition">Home</Link></div></nav>;\n}\n`
-    : `import { Link } from "react-router-dom";\nexport default function Navbar() {\n  return <nav style={{ borderBottom: "1px solid #2a2a2a", padding: "1rem 1.5rem", display: "flex", justifyContent: "space-between", background: "#0a0a0a" }}><Link to="/" style={{ fontWeight: 700, color: "#fff", textDecoration: "none" }}>${name}</Link></nav>;\n}\n`
-  );
+  // ── Navbar ─────────────────────────────────────────────────────────────────
+  write(path.join(root, "src/components/Navbar.tsx"), opts.shadcn
+    ? `import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
 
-  write(path.join(root, "src/components/ui/Button.tsx"), opts.tailwind
-    ? `import { ButtonHTMLAttributes } from "react";\nimport { cn } from "@/lib/utils";\ninterface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> { variant?: "primary" | "secondary" | "ghost"; size?: "sm" | "md" | "lg"; }\nexport default function Button({ children, variant = "primary", size = "md", className, ...props }: ButtonProps) {\n  const base = "inline-flex items-center justify-center font-semibold rounded-lg transition focus:outline-none disabled:opacity-50";\n  const variants = { primary: "bg-white text-gray-950 hover:bg-gray-200", secondary: "border border-gray-700 text-gray-300 hover:border-gray-400", ghost: "text-gray-400 hover:text-white" };\n  const sizes = { sm: "px-3 py-1.5 text-sm", md: "px-5 py-2.5 text-sm", lg: "px-7 py-3 text-base" };\n  return <button className={cn(base, variants[variant], sizes[size], className)} {...props}>{children}</button>;\n}\n`
-    : `import { ButtonHTMLAttributes } from "react";\ninterface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> { variant?: "primary" | "secondary"; }\nexport default function Button({ children, variant = "primary", ...props }: ButtonProps) {\n  return <button style={{ padding: "0.6rem 1.4rem", borderRadius: "8px", fontWeight: 600, cursor: "pointer", background: variant === "primary" ? "#fff" : "transparent", color: variant === "primary" ? "#000" : "#fff", border: variant === "secondary" ? "1px solid #444" : "none" }} {...props}>{children}</button>;\n}\n`
+export default function Navbar() {
+  return (
+    <nav className="border-b px-6 py-4 flex items-center justify-between bg-background">
+      <Link to="/" className="font-bold text-lg">${name}</Link>
+      <div className="flex items-center gap-4">
+        <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition">Home</Link>
+        <Button variant="ghost" size="icon">
+          <Menu className="h-5 w-5" />
+        </Button>
+      </div>
+    </nav>
   );
+}
+`
+    : `import { Link } from "react-router-dom";
+export default function Navbar() {
+  return (
+    <nav className="border-b px-6 py-4 flex items-center justify-between bg-background">
+      <Link to="/" className="font-bold text-lg">${name}</Link>
+      <div className="flex gap-6 text-sm opacity-60">
+        <Link to="/" className="hover:opacity-100 transition">Home</Link>
+      </div>
+    </nav>
+  );
+}
+`);
 
-  write(path.join(root, "src/components/ui/Input.tsx"), opts.tailwind
-    ? `import { InputHTMLAttributes } from "react";\nimport { cn } from "@/lib/utils";\ninterface InputProps extends InputHTMLAttributes<HTMLInputElement> { label?: string; error?: string; }\nexport default function Input({ label, error, className, ...props }: InputProps) {\n  return <div className="flex flex-col gap-1">{label && <label className="text-sm font-medium text-gray-300">{label}</label>}<input className={cn("w-full px-4 py-2.5 rounded-lg bg-gray-900 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-gray-400 transition", error && "border-red-500", className)} {...props} />{error && <p className="text-xs text-red-400">{error}</p>}</div>;\n}\n`
-    : `import { InputHTMLAttributes } from "react";\ninterface InputProps extends InputHTMLAttributes<HTMLInputElement> { label?: string; error?: string; }\nexport default function Input({ label, error, ...props }: InputProps) {\n  return <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>{label && <label style={{ fontSize: "0.85rem", color: "#ccc" }}>{label}</label>}<input style={{ padding: "0.6rem 1rem", borderRadius: "8px", background: "#1a1a1a", border: "1px solid #333", color: "#fff" }} {...props} />{error && <p style={{ fontSize: "0.75rem", color: "#f87171" }}>{error}</p>}</div>;\n}\n`
-  );
-
-  write(path.join(root, "src/components/ui/Card.tsx"), opts.tailwind
-    ? `import { HTMLAttributes } from "react";\nimport { cn } from "@/lib/utils";\ninterface CardProps extends HTMLAttributes<HTMLDivElement> {}\nexport default function Card({ children, className, ...props }: CardProps) {\n  return <div className={cn("bg-gray-900 border border-gray-800 rounded-xl p-6", className)} {...props}>{children}</div>;\n}\n`
-    : `import { HTMLAttributes } from "react";\nexport default function Card({ children, ...props }: HTMLAttributes<HTMLDivElement>) {\n  return <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "12px", padding: "1.5rem" }} {...props}>{children}</div>;\n}\n`
-  );
+  // ── UI components ─────────────────────────────────────────────────────────
+  if (opts.shadcn) {
+    write(path.join(root, "src/components/ui/button.tsx"), shadcn.buttonComponent);
+    write(path.join(root, "src/components/ui/card.tsx"), shadcn.cardComponent);
+    write(path.join(root, "src/components/ui/input.tsx"), shadcn.inputComponent);
+    write(path.join(root, "src/components/ui/badge.tsx"), shadcn.badgeComponent);
+  } else {
+    write(path.join(root, "src/components/ui/Button.tsx"), `import { ButtonHTMLAttributes } from "react";\nimport { cn } from "@/lib/utils";\ninterface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> { variant?: "primary" | "secondary" | "ghost"; }\nexport default function Button({ children, variant = "primary", className, ...props }: ButtonProps) {\n  const variants = { primary: "bg-foreground text-background hover:opacity-90", secondary: "border hover:bg-accent", ghost: "opacity-60 hover:opacity-100" };\n  return <button className={cn("inline-flex items-center justify-center font-semibold rounded-lg px-5 py-2.5 text-sm transition focus:outline-none disabled:opacity-50", variants[variant], className)} {...props}>{children}</button>;\n}\n`);
+    write(path.join(root, "src/components/ui/Input.tsx"), `import { InputHTMLAttributes } from "react";\nimport { cn } from "@/lib/utils";\ninterface InputProps extends InputHTMLAttributes<HTMLInputElement> { label?: string; error?: string; }\nexport default function Input({ label, error, className, ...props }: InputProps) {\n  return <div className="flex flex-col gap-1">{label && <label className="text-sm font-medium">{label}</label>}<input className={cn("w-full px-4 py-2.5 rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-ring transition", error && "border-destructive", className)} {...props} />{error && <p className="text-xs text-destructive">{error}</p>}</div>;\n}\n`);
+    write(path.join(root, "src/components/ui/Card.tsx"), `import { HTMLAttributes } from "react";\nimport { cn } from "@/lib/utils";\nexport default function Card({ children, className, ...props }: HTMLAttributes<HTMLDivElement>) {\n  return <div className={cn("rounded-lg border bg-card text-card-foreground shadow-sm p-6", className)} {...props}>{children}</div>;\n}\n`);
+  }
 }
 
 function _createLib(root, opts) {
-  write(path.join(root, "src/lib/utils.ts"), libUtils);
+  write(path.join(root, "src/lib/utils.ts"),
+    opts.shadcn ? shadcn.libUtils : `import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+export function formatDate(date: Date | string): string {
+  return new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+}
+
+export function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+`);
 
   if (opts.firebase) {
     write(path.join(root, "src/lib/firebase/config.ts"), `import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
@@ -168,12 +355,13 @@ export const storage: FirebaseStorage = getStorage(app);
 export default app;
 `);
     write(path.join(root, "src/lib/firebase/converters.ts"), firebaseConverters);
-    write(path.join(root, "src/lib/firebase/errors.ts"),     firebaseErrors);
+    write(path.join(root, "src/lib/firebase/errors.ts"), firebaseErrors);
     write(path.join(root, "src/lib/firebase/hooks/useAuth.ts"), `import { useEffect, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { auth } from "../config";
+
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user,    setUser]    = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, u => { setUser(u); setLoading(false); });
@@ -187,13 +375,15 @@ export function useAuth() {
 
 function _createServices(root) {
   write(path.join(root, "src/services/api.ts"), `const BASE_URL = import.meta.env.VITE_API_URL ?? "";
+
 async function request<T>(endpoint: string, options?: RequestInit): Promise<{ data: T | null; error: string | null }> {
   try {
     const res = await fetch(\`\${BASE_URL}\${endpoint}\`, { headers: { "Content-Type": "application/json" }, ...options });
-    if (!res.ok) { const body = await res.json().catch(() => ({})); return { data: null, error: (body as any).message ?? \`Error \${res.status}\` }; }
+    if (!res.ok) { const body = await res.json().catch(() => ({})); return { data: null, error: (body as { message?: string }).message ?? \`Error \${res.status}\` }; }
     return { data: await res.json() as T, error: null };
   } catch (err) { return { data: null, error: err instanceof Error ? err.message : "Network error" }; }
 }
+
 export const api = {
   get:    <T>(url: string, opts?: RequestInit) => request<T>(url, { method: "GET", ...opts }),
   post:   <T>(url: string, body: unknown, opts?: RequestInit) => request<T>(url, { method: "POST",   body: JSON.stringify(body), ...opts }),
@@ -203,14 +393,8 @@ export const api = {
 `);
 }
 
-function _createHooks(root) {
-  write(path.join(root, "src/hooks/useLocalStorage.ts"), useLocalStorage);
-}
-
-function _createTypes(root, opts) {
-  write(path.join(root, "src/types/index.ts"), globalTypes(opts.firebase));
-}
-
+function _createHooks(root) { write(path.join(root, "src/hooks/useLocalStorage.ts"), useLocalStorage); }
+function _createTypes(root, opts) { write(path.join(root, "src/types/index.ts"), globalTypes(opts.firebase)); }
 function _createConstants(root, name) {
   write(path.join(root, "src/constants/index.ts"), `export const APP_NAME = "${name}";\nexport const APP_URL  = import.meta.env.VITE_APP_URL ?? "http://localhost:5173";\nexport const ROUTES = { home: "/", dashboard: "/dashboard", signin: "/signin", signup: "/signup" } as const;\n`);
 }
@@ -218,7 +402,7 @@ function _createConstants(root, name) {
 function _createEnvAndDocs(root, name, opts) {
   write(path.join(root, ".gitignore"), gitignore);
   write(path.join(root, ".env.example"), `VITE_APP_NAME="${name}"\nVITE_APP_URL="http://localhost:5173"\nVITE_API_URL=""\n${opts.firebase ? firebaseEnvVite : ""}`);
-  write(path.join(root, "README.md"), `# ${name}\n\n> Scaffolded with [create-em-app](https://github.com/Youngemmy5956/create-em-app)\n\n## Getting Started\n\n\`\`\`bash\nnpm install\n${opts.firebase ? "cp .env.example .env.local\n" : ""}npm run dev\n\`\`\`\n`);
+  write(path.join(root, "README.md"), `# ${name}\n\n> Scaffolded with [create-em-app](https://github.com/Youngemmy5956/create-em-app)\n\n## Stack\n\n- React 18 + Vite 5\n- TypeScript\n- React Router v6\n- Tailwind CSS${opts.shadcn ? "\n- shadcn/ui + Radix UI\n- Lucide React" : "\n- Lucide React"}${opts.firebase ? "\n- Firebase" : ""}\n\n## Getting Started\n\n\`\`\`bash\nnpm install\n${opts.firebase ? "cp .env.example .env.local\n" : ""}npm run dev\n\`\`\`\n\n## Before merging any PR, check \`CHECKLIST.md\`\n`);
 }
 
 module.exports = { scaffold };
