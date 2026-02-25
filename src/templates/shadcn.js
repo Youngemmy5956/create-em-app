@@ -184,26 +184,28 @@ export function sleep(ms: number): Promise<void> {
 `;
 
 // layout.tsx with Geist font
-const layoutTsx = (name) => `import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans";
-import { GeistMono } from "geist/font/mono";
-import "./globals.css";
-
-export const metadata: Metadata = {
-  title: "${name}",
-  description: "Built with create-em-app",
-};
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en" className={${"${GeistSans.variable} ${GeistMono.variable}"}} suppressHydrationWarning>
-      <body className="min-h-screen bg-background font-sans antialiased">
-        {children}
-      </body>
-    </html>
-  );
-}
-`;
+const layoutTsx = (name) => [
+    `import type { Metadata } from "next";`,
+    `import { GeistSans } from "geist/font/sans";`,
+    `import { GeistMono } from "geist/font/mono";`,
+    `import "./globals.css";`,
+    ``,
+    `export const metadata: Metadata = {`,
+    `  title: "${name}",`,
+    `  description: "Built with create-em-app",`,
+    `};`,
+    ``,
+    `export default function RootLayout({ children }: { children: React.ReactNode }) {`,
+    `  return (`,
+    "    <html lang=\"en\" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>",
+    `      <body className="min-h-screen bg-background font-sans antialiased">`,
+    `        {children}`,
+    `      </body>`,
+    `    </html>`,
+    `  );`,
+    `}`,
+    ``,
+].join("\n");
 
 // page.tsx using shadcn Button
 const pageTsx = (name) => `import { Button } from "@/components/ui/button";
