@@ -63,7 +63,7 @@ It will ask:
 
 | Flag | Stack |
 |------|-------|
-| `--next` | Next.js 14, App Router, TypeScript, Turbopack |
+| `--next` | Next.js 14, App Router, TypeScript |
 | `--react` | React 18, Vite 5, React Router v6, TypeScript |
 | `--node` | Node.js, Express 4, TypeScript |
 
@@ -85,7 +85,7 @@ It will ask:
 create-em-app <project-name> [options]
 
   -i, --interactive    Walk through setup with prompts
-  --next               Next.js 14 + TypeScript + Turbopack (App Router)
+  --next               Next.js 14 (App Router) + TypeScript 
   --react              React + Vite + TypeScript
   --node               Node.js + Express + TypeScript API
   --shadcn             shadcn/ui + Radix UI + Lucide React + Geist font
