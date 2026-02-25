@@ -4,7 +4,7 @@
   "description": "Scaffold a new project the right way — Next.js, React, or Node.js with TypeScript, Tailwind, Firebase, and ESLint pre-configured",
   "main": "src/index.js",
   "bin": {
-    "create-em-app": "./bin/create-em-app.js"
+    "create-em-app": "bin/create-em-app.js"
   },
   "scripts": {
     "test": "node test/index.test.js"
@@ -25,7 +25,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Youngemmy5956/create-em-app"
+    "url": "git+https://github.com/Youngemmy5956/create-em-app.git"
   },
   "homepage": "https://github.com/Youngemmy5956/create-em-app#readme",
   "engines": {

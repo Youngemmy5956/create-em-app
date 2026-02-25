@@ -1,0 +1,6 @@
+test-next/
+test-react/
+test-node/
+test-*/
+*.log
+.DS_Store
