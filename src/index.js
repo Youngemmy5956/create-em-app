@@ -75,7 +75,7 @@ async function main() {
   // ── Summary ─────────────────────────────────────────────────────────────────
   log();
   info(`Project  : ${paint(c.bold, projectName)}`);
-  info(`Stack    : ${paint(c.bold, opts.stack === "next" ? "Next.js 14 + Turbopack + TypeScript" : opts.stack === "react" ? "React + Vite + TypeScript" : "Node.js API + TypeScript")}`);
+  info(`Stack    : ${paint(c.bold, opts.stack === "next" ? "Next.js 14 + TypeScript" : opts.stack === "react" ? "React + Vite + TypeScript" : "Node.js API + TypeScript")}`);
   info(`Tailwind : ${opts.tailwind ? paint(c.green, "yes") : paint(c.dim, "no")}`);
   info(`shadcn/ui: ${opts.shadcn ? paint(c.green, "yes (+ Radix UI + Lucide + Geist)") : paint(c.dim, "no")}`);
   info(`Firebase : ${opts.firebase ? paint(c.green, "yes") : paint(c.dim, "no")}`);

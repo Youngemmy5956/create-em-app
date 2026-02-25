@@ -45,7 +45,7 @@ function _createConfigFiles(root, name, opts) {
     version: "0.1.0",
     private: true,
     scripts: {
-      dev: "next dev --turbopack",
+      dev: "next dev",
       build: "next build",
       start: "next start",
       lint: "next lint",
