@@ -190,21 +190,25 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 );
 `);
 
-  // ── App.tsx ────────────────────────────────────────────────────────────────
+  // ── App.tsx — Header and Footer wired in ──────────────────────────────────────
   write(path.join(root, "src/App.tsx"), `import { Routes, Route } from "react-router-dom";
-import Navbar from "@/components/Navbar";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import Home from "@/pages/Home";
 import NotFound from "@/pages/NotFound";
 
 export default function App() {
   return (
-    <>
-      <Navbar />
-      <Routes>
-        <Route path="/"  element={<Home />} />
-        <Route path="*"  element={<NotFound />} />
-      </Routes>
-    </>
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      <main className="flex-1">
+        <Routes>
+          <Route path="/"  element={<Home />} />
+          <Route path="*"  element={<NotFound />} />
+        </Routes>
+      </main>
+      <Footer />
+    </div>
   );
 }
 `);
@@ -265,35 +269,142 @@ export default function NotFound() {
 }
 
 function _createComponents(root, name, opts) {
-  // ── Navbar ─────────────────────────────────────────────────────────────────
-  write(path.join(root, "src/components/Navbar.tsx"), opts.shadcn
+  // ── Header ─────────────────────────────────────────────────────────────────
+  write(path.join(root, "src/components/Header.tsx"), opts.shadcn
     ? `import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 
-export default function Navbar() {
+/**
+ * Header — modify this to customize your site header.
+ * Already wired into App.tsx, no extra setup needed.
+ */
+export default function Header() {
   return (
-    <nav className="border-b px-6 py-4 flex items-center justify-between bg-background">
-      <Link to="/" className="font-bold text-lg">${name}</Link>
-      <div className="flex items-center gap-4">
-        <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition">Home</Link>
-        <Button variant="ghost" size="icon">
-          <Menu className="h-5 w-5" />
-        </Button>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto flex h-16 items-center justify-between px-6">
+        <Link to="/" className="flex items-center gap-2 font-bold text-lg">${name}</Link>
+        <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
+          <Link to="/" className="hover:text-foreground transition">Home</Link>
+          <Link to="/about" className="hover:text-foreground transition">About</Link>
+          <Link to="/contact" className="hover:text-foreground transition">Contact</Link>
+        </nav>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" className="hidden md:inline-flex" asChild>
+            <Link to="/signin">Sign in</Link>
+          </Button>
+          <Button className="hidden md:inline-flex" asChild>
+            <Link to="/signup">Get started</Link>
+          </Button>
+          <Button variant="ghost" size="icon" className="md:hidden">
+            <Menu className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
-    </nav>
+    </header>
   );
 }
 `
     : `import { Link } from "react-router-dom";
-export default function Navbar() {
+
+/**
+ * Header — modify this to customize your site header.
+ * Already wired into App.tsx, no extra setup needed.
+ */
+export default function Header() {
   return (
-    <nav className="border-b px-6 py-4 flex items-center justify-between bg-background">
-      <Link to="/" className="font-bold text-lg">${name}</Link>
-      <div className="flex gap-6 text-sm opacity-60">
-        <Link to="/" className="hover:opacity-100 transition">Home</Link>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
+      <div className="container mx-auto flex h-16 items-center justify-between px-6">
+        <Link to="/" className="font-bold text-lg">${name}</Link>
+        <nav className="flex items-center gap-6 text-sm opacity-70">
+          <Link to="/" className="hover:opacity-100 transition">Home</Link>
+          <Link to="/about" className="hover:opacity-100 transition">About</Link>
+        </nav>
+        <div className="flex items-center gap-3">
+          <Link to="/signin" className="text-sm font-medium hover:underline">Sign in</Link>
+          <Link to="/signup" className="text-sm font-semibold bg-foreground text-background px-4 py-2 rounded-lg hover:opacity-90 transition">Get started</Link>
+        </div>
       </div>
-    </nav>
+    </header>
+  );
+}
+`);
+
+  // ── Footer ─────────────────────────────────────────────────────────────────
+  write(path.join(root, "src/components/Footer.tsx"), opts.shadcn
+    ? `import { Link } from "react-router-dom";
+
+/**
+ * Footer — modify this to customize your site footer.
+ * Already wired into App.tsx, no extra setup needed.
+ */
+export default function Footer() {
+  const year = new Date().getFullYear();
+  return (
+    <footer className="border-t bg-background">
+      <div className="container mx-auto px-6 py-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div>
+            <Link to="/" className="font-bold text-lg">${name}</Link>
+            <p className="mt-2 text-sm text-muted-foreground">Built with create-em-app.</p>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-3">Links</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link to="/" className="hover:text-foreground transition">Home</Link></li>
+              <li><Link to="/about" className="hover:text-foreground transition">About</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-3">Legal</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link to="/privacy" className="hover:text-foreground transition">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-foreground transition">Terms of Service</Link></li>
+            </ul>
+          </div>
+        </div>
+        <div className="mt-10 border-t pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+          <p>© {year} ${name}. All rights reserved.</p>
+          <p>Built with <a href="https://github.com/Youngemmy5956/create-em-app" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition">create-em-app</a></p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+`
+    : `import { Link } from "react-router-dom";
+
+export default function Footer() {
+  const year = new Date().getFullYear();
+  return (
+    <footer className="border-t bg-background">
+      <div className="container mx-auto px-6 py-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div>
+            <Link to="/" className="font-bold text-lg">${name}</Link>
+            <p className="mt-2 text-sm opacity-60">Built with create-em-app.</p>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-3">Links</h3>
+            <ul className="space-y-2 text-sm opacity-60">
+              <li><Link to="/" className="hover:opacity-100 transition">Home</Link></li>
+              <li><Link to="/about" className="hover:opacity-100 transition">About</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-3">Legal</h3>
+            <ul className="space-y-2 text-sm opacity-60">
+              <li><Link to="/privacy" className="hover:opacity-100 transition">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:opacity-100 transition">Terms of Service</Link></li>
+            </ul>
+          </div>
+        </div>
+        <div className="mt-10 border-t pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm opacity-50">
+          <p>© {year} ${name}. All rights reserved.</p>
+          <p>Built with create-em-app</p>
+        </div>
+      </div>
+    </footer>
   );
 }
 `);

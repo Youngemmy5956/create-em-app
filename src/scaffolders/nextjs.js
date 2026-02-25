@@ -167,11 +167,13 @@ function _createAppFiles(root, name, opts) {
     opts.shadcn ? shadcn.globalsCss : `@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n* { box-sizing: border-box; }\nbody { min-height: 100vh; }\n`
   );
 
-  // ── layout.tsx — Geist font wired in ─────────────────────────────────────────
+  // ── layout.tsx — Header and Footer wired in ──────────────────────────────────
   write(path.join(root, "src/app/layout.tsx"),
     opts.shadcn ? shadcn.layoutTsx(name) : `import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -182,7 +184,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={\`\${GeistSans.variable} \${GeistMono.variable}\`}>
-      <body className="min-h-screen font-sans antialiased">{children}</body>
+      <body className="min-h-screen font-sans antialiased flex flex-col">
+        <Header />
+        <main className="flex-1">{children}</main>
+        <Footer />
+      </body>
     </html>
   );
 }
@@ -223,29 +229,88 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 
 function _createComponents(root, name, opts) {
-  // ── Navbar ────────────────────────────────────────────────────────────────────
-  write(path.join(root, "src/components/Navbar.tsx"),
-    opts.shadcn ? shadcn.navbarTsx(name) : `import Link from "next/link";
-export default function Navbar() {
-  return (
-    <nav className="border-b px-6 py-4 flex items-center justify-between bg-background">
-      <Link href="/" className="font-bold text-lg">${name}</Link>
-      <div className="flex gap-6 text-sm text-muted-foreground">
-        <Link href="/" className="hover:text-foreground transition">Home</Link>
-      </div>
-    </nav>
-  );
-}
-`);
-
   if (opts.shadcn) {
-    // Pre-built shadcn/ui components — no need to run npx shadcn add
+    // ── Header (shadcn) ───────────────────────────────────────────────────────
+    write(path.join(root, "src/components/Header.tsx"), shadcn.headerTsx(name));
+
+    // ── Footer (shadcn) ───────────────────────────────────────────────────────
+    write(path.join(root, "src/components/Footer.tsx"), shadcn.footerTsx(name));
+
+    // ── Pre-built shadcn/ui components ────────────────────────────────────────
     write(path.join(root, "src/components/ui/button.tsx"), shadcn.buttonComponent);
     write(path.join(root, "src/components/ui/card.tsx"), shadcn.cardComponent);
     write(path.join(root, "src/components/ui/input.tsx"), shadcn.inputComponent);
     write(path.join(root, "src/components/ui/badge.tsx"), shadcn.badgeComponent);
   } else {
-    // Plain Tailwind components
+    // ── Header (plain Tailwind) ───────────────────────────────────────────────
+    write(path.join(root, "src/components/Header.tsx"), `import Link from "next/link";
+
+/**
+ * Header — modify this to customize your site header.
+ * Already wired into layout.tsx, no extra setup needed.
+ */
+export default function Header() {
+  return (
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
+      <div className="container mx-auto flex h-16 items-center justify-between px-6">
+        <Link href="/" className="font-bold text-lg">${name}</Link>
+        <nav className="flex items-center gap-6 text-sm text-muted-foreground">
+          <Link href="/" className="hover:text-foreground transition">Home</Link>
+          <Link href="/about" className="hover:text-foreground transition">About</Link>
+        </nav>
+        <div className="flex items-center gap-3">
+          <Link href="/signin" className="text-sm font-medium hover:underline">Sign in</Link>
+          <Link href="/signup" className="text-sm font-semibold bg-foreground text-background px-4 py-2 rounded-lg hover:opacity-90 transition">Get started</Link>
+        </div>
+      </div>
+    </header>
+  );
+}
+`);
+
+    // ── Footer (plain Tailwind) ───────────────────────────────────────────────
+    write(path.join(root, "src/components/Footer.tsx"), `import Link from "next/link";
+
+/**
+ * Footer — modify this to customize your site footer.
+ * Already wired into layout.tsx, no extra setup needed.
+ */
+export default function Footer() {
+  const year = new Date().getFullYear();
+  return (
+    <footer className="border-t bg-background">
+      <div className="container mx-auto px-6 py-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div>
+            <Link href="/" className="font-bold text-lg">${name}</Link>
+            <p className="mt-2 text-sm text-muted-foreground">Built with create-em-app.</p>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-3">Links</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link href="/" className="hover:text-foreground transition">Home</Link></li>
+              <li><Link href="/about" className="hover:text-foreground transition">About</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-3">Legal</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link href="/privacy" className="hover:text-foreground transition">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-foreground transition">Terms of Service</Link></li>
+            </ul>
+          </div>
+        </div>
+        <div className="mt-10 border-t pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+          <p>© {year} ${name}. All rights reserved.</p>
+          <p>Built with <a href="https://github.com/Youngemmy5956/create-em-app" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition">create-em-app</a></p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+`);
+
+    // ── Plain UI components ───────────────────────────────────────────────────
     write(path.join(root, "src/components/ui/Button.tsx"), `import { ButtonHTMLAttributes } from "react";\nimport { cn } from "@/lib/utils";\ninterface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> { variant?: "primary" | "secondary" | "ghost"; size?: "sm" | "md" | "lg"; }\nexport default function Button({ children, variant = "primary", size = "md", className, ...props }: ButtonProps) {\n  const base = "inline-flex items-center justify-center font-semibold rounded-lg transition focus:outline-none disabled:opacity-50";\n  const variants = { primary: "bg-foreground text-background hover:opacity-90", secondary: "border hover:bg-accent", ghost: "text-muted-foreground hover:text-foreground" };\n  const sizes = { sm: "px-3 py-1.5 text-sm", md: "px-5 py-2.5 text-sm", lg: "px-7 py-3 text-base" };\n  return <button className={cn(base, variants[variant], sizes[size], className)} {...props}>{children}</button>;\n}\n`);
     write(path.join(root, "src/components/ui/Input.tsx"), `import { InputHTMLAttributes } from "react";\nimport { cn } from "@/lib/utils";\ninterface InputProps extends InputHTMLAttributes<HTMLInputElement> { label?: string; error?: string; }\nexport default function Input({ label, error, className, ...props }: InputProps) {\n  return <div className="flex flex-col gap-1">{label && <label className="text-sm font-medium">{label}</label>}<input className={cn("w-full px-4 py-2.5 rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-ring transition", error && "border-destructive", className)} {...props} />{error && <p className="text-xs text-destructive">{error}</p>}</div>;\n}\n`);
     write(path.join(root, "src/components/ui/Card.tsx"), `import { HTMLAttributes } from "react";\nimport { cn } from "@/lib/utils";\nexport default function Card({ children, className, ...props }: HTMLAttributes<HTMLDivElement>) {\n  return <div className={cn("rounded-lg border bg-card text-card-foreground shadow-sm p-6", className)} {...props}>{children}</div>;\n}\n`);

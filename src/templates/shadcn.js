@@ -183,11 +183,13 @@ export function sleep(ms: number): Promise<void> {
 }
 `;
 
-// layout.tsx with Geist font
+// layout.tsx with Geist font — Header and Footer wired in
 const layoutTsx = (name) => [
     `import type { Metadata } from "next";`,
     `import { GeistSans } from "geist/font/sans";`,
     `import { GeistMono } from "geist/font/mono";`,
+    `import Header from "@/components/Header";`,
+    `import Footer from "@/components/Footer";`,
     `import "./globals.css";`,
     ``,
     `export const metadata: Metadata = {`,
@@ -198,8 +200,12 @@ const layoutTsx = (name) => [
     `export default function RootLayout({ children }: { children: React.ReactNode }) {`,
     `  return (`,
     "    <html lang=\"en\" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>",
-    `      <body className="min-h-screen bg-background font-sans antialiased">`,
-    `        {children}`,
+    `      <body className="min-h-screen bg-background font-sans antialiased flex flex-col">`,
+    `        <Header />`,
+    `        <main className="flex-1">`,
+    `          {children}`,
+    `        </main>`,
+    `        <Footer />`,
     `      </body>`,
     `    </html>`,
     `  );`,
@@ -254,6 +260,110 @@ export default function Navbar() {
         </Button>
       </div>
     </nav>
+  );
+}
+`;
+
+// Header component
+const headerTsx = (name) => `import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
+
+/**
+ * Header — modify this to customize your site header.
+ * Already wired into layout.tsx, no extra setup needed.
+ */
+export default function Header() {
+  return (
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto flex h-16 items-center justify-between px-6">
+
+        {/* Logo / Brand */}
+        <Link href="/" className="flex items-center gap-2 font-bold text-lg">
+          ${name}
+        </Link>
+
+        {/* Desktop Nav */}
+        <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
+          <Link href="/" className="hover:text-foreground transition">Home</Link>
+          <Link href="/about" className="hover:text-foreground transition">About</Link>
+          <Link href="/contact" className="hover:text-foreground transition">Contact</Link>
+        </nav>
+
+        {/* Actions */}
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" className="hidden md:inline-flex" asChild>
+            <Link href="/signin">Sign in</Link>
+          </Button>
+          <Button asChild className="hidden md:inline-flex">
+            <Link href="/signup">Get started</Link>
+          </Button>
+
+          {/* Mobile menu button — wire up your own sheet/drawer here */}
+          <Button variant="ghost" size="icon" className="md:hidden">
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle menu</span>
+          </Button>
+        </div>
+
+      </div>
+    </header>
+  );
+}
+`;
+
+// Footer component
+const footerTsx = (name) => `import Link from "next/link";
+
+/**
+ * Footer — modify this to customize your site footer.
+ * Already wired into layout.tsx, no extra setup needed.
+ */
+export default function Footer() {
+  const year = new Date().getFullYear();
+
+  return (
+    <footer className="border-t bg-background">
+      <div className="container mx-auto px-6 py-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+          {/* Brand */}
+          <div>
+            <Link href="/" className="font-bold text-lg">${name}</Link>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Built with create-em-app.
+            </p>
+          </div>
+
+          {/* Links */}
+          <div>
+            <h3 className="font-semibold mb-3">Links</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link href="/" className="hover:text-foreground transition">Home</Link></li>
+              <li><Link href="/about" className="hover:text-foreground transition">About</Link></li>
+              <li><Link href="/contact" className="hover:text-foreground transition">Contact</Link></li>
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div>
+            <h3 className="font-semibold mb-3">Legal</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link href="/privacy" className="hover:text-foreground transition">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-foreground transition">Terms of Service</Link></li>
+            </ul>
+          </div>
+
+        </div>
+
+        {/* Bottom bar */}
+        <div className="mt-10 border-t pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+          <p>© {year} ${name}. All rights reserved.</p>
+          <p>Built with <a href="https://github.com/Youngemmy5956/create-em-app" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition">create-em-app</a></p>
+        </div>
+
+      </div>
+    </footer>
   );
 }
 `;
@@ -413,6 +523,8 @@ module.exports = {
     layoutTsx,
     pageTsx,
     navbarTsx,
+    headerTsx,
+    footerTsx,
     buttonComponent,
     cardComponent,
     inputComponent,
