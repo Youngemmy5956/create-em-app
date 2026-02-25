@@ -129,4 +129,4 @@ async function main() {
   log(paint(c.dim, `  Scaffolded by create-em-app\n`));
 }
 
-main().catch(err => { console.error(err); process.exit(1); });
+main().catch(err => { console.error(err); process.exit(1); }); 
