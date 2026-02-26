@@ -33,7 +33,7 @@ npx create-em-app my-app --next --shadcn
 ### One-liner (fastest)
 
 ```bash
-create-em-app my-app --next --shadcn --firebase
+create-em-app my-app --next --shadcn --firebase --seo
 ```
 
 ### Interactive mode (guided)
@@ -54,6 +54,9 @@ It will ask:
     3. Node.js API + Express + TypeScript
   Include shadcn/ui + Radix UI + Lucide + Geist font? (y/n): y
   Include Firebase? (y/n): y
+  Include SEO? (sitemap, robots.txt, metadata) (y/n): y
+  Project description: A Nigerian fintech platform for managing personal finances and automating tax calculations.
+  Production URL (e.g. https://myapp.com): https://myapp.com
   Run npm install now? (y/n): y
 ```
 
@@ -74,6 +77,7 @@ It will ask:
 | `--shadcn` | shadcn/ui + Radix UI + Lucide React + Geist font — fully configured |
 | `--tailwind` | Tailwind CSS only (no shadcn) |
 | `--firebase` | Firebase config, Firestore converters, error helpers, `useAuth` hook |
+| `--seo` | sitemap.xml, robots.txt, `generateMetadata()` helper — powered by your project description |
 
 > `--shadcn` automatically includes Tailwind — no need to pass both flags.
 
@@ -84,15 +88,17 @@ It will ask:
 ```
 create-em-app <project-name> [options]
 
-  -i, --interactive    Walk through setup with prompts
-  --next               Next.js 14 (App Router) + TypeScript 
-  --react              React + Vite + TypeScript
-  --node               Node.js + Express + TypeScript API
-  --shadcn             shadcn/ui + Radix UI + Lucide React + Geist font
-  --tailwind           Tailwind CSS only
-  --firebase           Firebase setup
-  --no-install         Skip npm install
-  -h, --help           Show help
+  -i, --interactive        Walk through setup with prompts
+  --next                   Next.js 14 (App Router) + TypeScript
+  --react                  React + Vite + TypeScript
+  --node                   Node.js + Express + TypeScript API
+  --shadcn                 shadcn/ui + Radix UI + Lucide React + Geist font
+  --tailwind               Tailwind CSS only
+  --firebase               Firebase setup
+  --seo                    Sitemap, robots.txt, and SEO metadata
+  --site-url <url>         Your production URL (e.g. https://myapp.com)
+  --no-install             Skip npm install
+  -h, --help               Show help
 ```
 
 ---
@@ -100,19 +106,19 @@ create-em-app <project-name> [options]
 ## Examples
 
 ```bash
-# Next.js — full stack with shadcn
-create-em-app my-shop --next --shadcn --firebase
+# Next.js — full stack with everything
+create-em-app my-shop --next --shadcn --firebase --seo
 
-# Next.js — Tailwind only
-create-em-app my-blog --next --tailwind
+# Next.js — with SEO and a custom site URL
+create-em-app my-blog --next --shadcn --seo --site-url https://myblog.com
 
 # React + Vite — full
-create-em-app my-dashboard --react --shadcn --firebase
+create-em-app my-dashboard --react --shadcn --firebase --seo
 
 # Node.js API
 create-em-app my-api --node --firebase
 
-# Interactive
+# Interactive (recommended for first-timers)
 create-em-app -i
 ```
 
@@ -120,23 +126,29 @@ create-em-app -i
 
 ## What gets generated
 
-### Next.js (`--next --shadcn --firebase`)
+### Next.js (`--next --shadcn --firebase --seo`)
 
 ```
 my-app/
 ├── .github/
 │   └── pull_request_template.md   ← checklist appears on every GitHub PR
+├── public/
+│   ├── images/
+│   └── icons/
 ├── src/
 │   ├── app/
 │   │   ├── (routes)/              ← your pages go here
 │   │   ├── globals.css            ← Tailwind + shadcn CSS variables
-│   │   ├── layout.tsx             ← Geist font wired in
-│   │   ├── page.tsx               ← custom homepage (not the default Next.js page)
+│   │   ├── layout.tsx             ← Geist font + Header + Footer wired in
+│   │   ├── page.tsx               ← custom homepage
+│   │   ├── sitemap.ts             ← served at /sitemap.xml automatically
+│   │   ├── robots.ts              ← served at /robots.txt automatically
 │   │   ├── loading.tsx
 │   │   ├── error.tsx
 │   │   └── not-found.tsx
 │   ├── components/
-│   │   ├── Navbar.tsx             ← with Lucide Menu icon
+│   │   ├── Header.tsx             ← sticky header with nav + auth buttons
+│   │   ├── Footer.tsx             ← 3-column footer with links + copyright
 │   │   └── ui/
 │   │       ├── button.tsx         ← shadcn/ui Button (all variants)
 │   │       ├── card.tsx           ← shadcn/ui Card
@@ -146,6 +158,8 @@ my-app/
 │   │   └── useLocalStorage.ts
 │   ├── lib/
 │   │   ├── utils.ts               ← cn() using clsx + tailwind-merge
+│   │   ├── seo.ts                 ← generateMetadata() helper for every page
+│   │   ├── seo.README.md          ← full SEO usage guide
 │   │   └── firebase/
 │   │       ├── config.ts          ← db, auth, storage exports
 │   │       ├── converters.ts      ← type-safe Firestore converter
@@ -167,21 +181,26 @@ my-app/
 └── .gitignore
 ```
 
-### React + Vite (`--react --shadcn --firebase`)
+### React + Vite (`--react --shadcn --firebase --seo`)
 
 ```
 my-app/
 ├── .github/
 │   └── pull_request_template.md
+├── public/
+│   ├── sitemap.xml                ← static sitemap — submit to Google Search Console
+│   └── robots.txt                 ← search engine crawl rules
 ├── src/
-│   ├── App.tsx                    ← React Router wired up
+│   ├── App.tsx                    ← Header + Footer + Router wired up
 │   ├── main.tsx                   ← BrowserRouter wraps everything
 │   ├── index.css                  ← Tailwind + shadcn CSS variables
+│   ├── index.html                 ← pre-filled OG + Twitter meta tags
 │   ├── pages/
 │   │   ├── Home.tsx               ← styled homepage
 │   │   └── NotFound.tsx
 │   ├── components/
-│   │   ├── Navbar.tsx             ← with Lucide icon
+│   │   ├── Header.tsx             ← sticky header with nav + auth buttons
+│   │   ├── Footer.tsx             ← 3-column footer with links + copyright
 │   │   └── ui/
 │   │       ├── button.tsx
 │   │       ├── card.tsx
@@ -191,8 +210,10 @@ my-app/
 │   │   └── useLocalStorage.ts
 │   ├── lib/
 │   │   ├── utils.ts
+│   │   ├── seo.ts                 ← getSeoMeta() helper for every page
+│   │   ├── seo.README.md
 │   │   └── firebase/
-│   │       ├── config.ts          ← uses import.meta.env.VITE_*
+│   │       ├── config.ts
 │   │       ├── converters.ts
 │   │       ├── errors.ts
 │   │       └── hooks/
@@ -238,6 +259,57 @@ my-api/
 
 ---
 
+## SEO
+
+When you pass `--seo`, you'll be asked for a short description of your project and your production URL. That description is used to automatically generate your site metadata, keywords, and SEO files.
+
+**Next.js** — `sitemap.ts` and `robots.ts` are served automatically by Next.js at `/sitemap.xml` and `/robots.txt`. No extra config needed.
+
+**React + Vite** — `public/sitemap.xml` and `public/robots.txt` are static files. Submit `sitemap.xml` to Google Search Console after deploying.
+
+### Using `generateMetadata()` in a page
+
+```ts
+// src/app/about/page.tsx
+import { generateMetadata as genMeta } from "@/lib/seo";
+
+export const metadata = genMeta({
+  title:       "About Us",
+  description: "Learn more about what we do.",
+  url:         "/about",
+});
+
+export default function AboutPage() { ... }
+```
+
+### Adding a new route to the sitemap
+
+Open `src/app/sitemap.ts` and add:
+
+```ts
+{ url: `${BASE_URL}/blog`, lastModified: new Date(), changeFrequency: "daily", priority: 0.9 },
+```
+
+---
+
+## Header and Footer
+
+Every project includes a pre-built `Header.tsx` and `Footer.tsx` already wired into `layout.tsx` (Next.js) or `App.tsx` (React). Open them and start editing — your nav links, logo, and footer content are all in one place.
+
+**Header includes:**
+- Sticky top bar with backdrop blur
+- Logo / brand name linked to home
+- Desktop navigation links
+- Sign in + Get started buttons
+- Mobile menu button (wire up your own drawer)
+
+**Footer includes:**
+- 3-column grid: brand, links, legal
+- Auto-updating copyright year
+- Links to Privacy Policy and Terms of Service
+
+---
+
 ## Pre-Merge Checklist
 
 Every project gets a `CHECKLIST.md` and a `.github/pull_request_template.md` automatically.
@@ -277,7 +349,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, User } from "lucide-react";
+import { Search } from "lucide-react";
 
 <Button>Submit</Button>
 <Button variant="outline">Cancel</Button>
@@ -357,7 +429,8 @@ create-em-app/
 │       ├── files.js           ← file write/mkdir helpers
 │       ├── prompt.js          ← interactive prompts
 │       ├── args.js            ← CLI argument parser
-│       └── checklist.js       ← pre-merge checklist generator
+│       ├── checklist.js       ← pre-merge checklist generator
+│       └── seo.js             ← sitemap, robots.txt, metadata generator
 └── package.json
 ```
 

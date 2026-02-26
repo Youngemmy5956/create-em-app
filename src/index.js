@@ -8,6 +8,7 @@ const { createRL, ask, askChoice, askYesNo } = require("./utils/prompt");
 const { log, info, ok, warn, step, header, spin, done, paint, c } = require("./utils/colors");
 const { printTree } = require("./utils/files");
 const { generateChecklist } = require("./utils/checklist");
+const { generateSeo, parseSeoFromDescription } = require("./utils/seo");
 
 const nextScaffolder = require("./scaffolders/nextjs");
 const reactScaffolder = require("./scaffolders/react");
@@ -52,7 +53,32 @@ async function main() {
     }
 
     opts.firebase = await askYesNo(rl, "Include Firebase?");
+
+    // ── SEO prompt ────────────────────────────────────────────────────────────
+    if (opts.stack !== "node") {
+      opts.seo = await askYesNo(rl, "Include SEO? (sitemap, robots.txt, metadata)");
+      if (opts.seo) {
+        log();
+        log(paint(c.dim, "  Describe your project in 1-2 sentences."));
+        log(paint(c.dim, "  This will be used for your site description, keywords, and metadata.\n"));
+        opts.description = (await ask(rl, paint(c.bold, "  Project description: "))).trim();
+        opts.siteUrl = (await ask(rl, paint(c.bold, "  Production URL (e.g. https://myapp.com): "))).trim();
+        if (!opts.siteUrl) opts.siteUrl = `https://${opts.name}.com`;
+      }
+    }
+
     opts.install = await askYesNo(rl, "Run npm install now?");
+  }
+
+  // ── SEO — non-interactive flag mode ────────────────────────────────────────
+  if (opts.seo && !opts.description) {
+    log();
+    log(paint(c.dim, "  Describe your project in 1-2 sentences."));
+    log(paint(c.dim, "  This will be used for your site description, keywords, and metadata.\n"));
+    opts.description = (await ask(rl, paint(c.bold, "  Project description: "))).trim();
+    if (!opts.siteUrl) {
+      opts.siteUrl = (await ask(rl, paint(c.bold, "  Production URL (e.g. https://myapp.com): "))).trim();
+    }
   }
 
   rl.close();
@@ -60,7 +86,13 @@ async function main() {
   // shadcn always implies tailwind
   if (opts.shadcn) opts.tailwind = true;
 
-  // ── Validate ────────────────────────────────────────────────────────────────
+  // Parse description into structured SEO fields
+  const rawSeoFlag = opts.seo;
+  if (rawSeoFlag && opts.description) {
+    opts.seo = parseSeoFromDescription(opts.description, opts.name || "app");
+  }
+
+  // ── Validate ─────────────────────────────────────────────────────────────────
   if (!opts.name) { log(paint(c.red, "\n  ❌ Project name required.\n")); printHelp(); process.exit(1); }
   if (!opts.stack) { log(paint(c.red, "\n  ❌ Stack required.\n")); printHelp(); process.exit(1); }
 
@@ -72,29 +104,38 @@ async function main() {
     process.exit(1);
   }
 
-  // ── Summary ─────────────────────────────────────────────────────────────────
+  // ── Summary ──────────────────────────────────────────────────────────────────
   log();
   info(`Project  : ${paint(c.bold, projectName)}`);
   info(`Stack    : ${paint(c.bold, opts.stack === "next" ? "Next.js 14 + TypeScript" : opts.stack === "react" ? "React + Vite + TypeScript" : "Node.js API + TypeScript")}`);
   info(`Tailwind : ${opts.tailwind ? paint(c.green, "yes") : paint(c.dim, "no")}`);
   info(`shadcn/ui: ${opts.shadcn ? paint(c.green, "yes (+ Radix UI + Lucide + Geist)") : paint(c.dim, "no")}`);
   info(`Firebase : ${opts.firebase ? paint(c.green, "yes") : paint(c.dim, "no")}`);
+  info(`SEO      : ${opts.seo ? paint(c.green, "yes (sitemap + robots.txt + metadata)") : paint(c.dim, "no")}`);
   info(`ESLint   : ${paint(c.green, "yes (comment-cleaner included)")}`);
+  if (opts.seo) info(`Site URL : ${paint(c.cyan, opts.siteUrl || `https://${projectName}.com`)}`);
   log();
 
-  // ── Scaffold ────────────────────────────────────────────────────────────────
+  // ── Scaffold ──────────────────────────────────────────────────────────────────
   step("Scaffolding files...");
   if (opts.stack === "next") nextScaffolder.scaffold(root, projectName, opts);
   else if (opts.stack === "react") reactScaffolder.scaffold(root, projectName, opts);
   else if (opts.stack === "node") nodeScaffolder.scaffold(root, projectName, opts);
   ok("Files created");
 
-  // ── Checklist ────────────────────────────────────────────────────────────────
+  // ── SEO ───────────────────────────────────────────────────────────────────────
+  if (opts.seo) {
+    step("Generating SEO files...");
+    generateSeo(root, projectName, opts);
+    ok("sitemap, robots.txt, and metadata helper created");
+  }
+
+  // ── Checklist ─────────────────────────────────────────────────────────────────
   step("Generating pre-merge checklist...");
   generateChecklist(root, projectName, opts);
   ok("CHECKLIST.md + .github/pull_request_template.md created");
 
-  // ── Install ─────────────────────────────────────────────────────────────────
+  // ── Install ───────────────────────────────────────────────────────────────────
   if (opts.install !== false) {
     step("Installing dependencies...");
     spin("npm install");
@@ -108,13 +149,13 @@ async function main() {
     }
   }
 
-  // ── Tree ────────────────────────────────────────────────────────────────────
+  // ── Tree ──────────────────────────────────────────────────────────────────────
   log();
   header("  📁 Project structure:");
   log(paint(c.cyan + c.bold, `\n  ${projectName}/`));
   printTree(root);
 
-  // ── Next steps ──────────────────────────────────────────────────────────────
+  // ── Next steps ────────────────────────────────────────────────────────────────
   log();
   ok(`${projectName} is ready!`);
   log();
@@ -123,10 +164,18 @@ async function main() {
   if (opts.install === false) log(paint(c.cyan, `    npm install`));
   if (opts.firebase) log(paint(c.cyan, `    cp .env.example .env.local`));
   log(paint(c.cyan, `    npm run dev`));
+  if (opts.seo) {
+    log();
+    log(paint(c.green, `  🔍 SEO ready:`));
+    log(paint(c.dim, `     • /sitemap.xml  — submit to Google Search Console`));
+    log(paint(c.dim, `     • /robots.txt   — search engine crawl rules`));
+    log(paint(c.dim, `     • src/lib/seo.ts — use generateMetadata() in every page`));
+    log(paint(c.dim, `     • read src/lib/seo.README.md for full usage guide`));
+  }
   log();
   log(paint(c.yellow, `  📋 Read CHECKLIST.md before merging any pull request`));
   log();
   log(paint(c.dim, `  Scaffolded by create-em-app\n`));
 }
 
-main().catch(err => { console.error(err); process.exit(1); }); 
+main().catch(err => { console.error(err); process.exit(1); });

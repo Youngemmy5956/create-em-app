@@ -8,6 +8,9 @@ function parseArgs(argv) {
     tailwind: false,
     firebase: false,
     shadcn: false,
+    seo: false,
+    siteUrl: null,
+    description: null,
     install: true,
     interactive: false,
     help: false,
@@ -23,7 +26,9 @@ function parseArgs(argv) {
     else if (a === "--tailwind") opts.tailwind = true;
     else if (a === "--firebase") opts.firebase = true;
     else if (a === "--shadcn") opts.shadcn = true;
+    else if (a === "--seo") opts.seo = true;
     else if (a === "--no-install") opts.install = false;
+    else if (a === "--site-url" && args[i + 1]) { opts.siteUrl = args[++i]; }
     else if (!a.startsWith("-")) opts.name = a;
   }
 
@@ -43,20 +48,22 @@ ${paint(c.bold, "Usage:")}
   create-em-app --interactive
 
 ${paint(c.bold, "Options:")}
-  -i, --interactive   Walk through setup with prompts
-  --next              Next.js 14 + TypeScript + Turbopack
-  --react             React + Vite + TypeScript
-  --node              Node.js + Express + TypeScript API
-  --tailwind          Include Tailwind CSS
-  --shadcn            Include shadcn/ui + Radix UI + Lucide + Geist font
-  --firebase          Include Firebase setup
-  --no-install        Skip npm install
-  -h, --help          Show this help
+  -i, --interactive        Walk through setup with prompts
+  --next                   Next.js 14 + TypeScript (App Router)
+  --react                  React + Vite + TypeScript
+  --node                   Node.js + Express + TypeScript API
+  --tailwind               Include Tailwind CSS
+  --shadcn                 Include shadcn/ui + Radix UI + Lucide + Geist font
+  --firebase               Include Firebase setup
+  --seo                    Include sitemap, robots.txt, and SEO metadata
+  --site-url <url>         Your production URL (e.g. https://myapp.com)
+  --no-install             Skip npm install
+  -h, --help               Show this help
 
 ${paint(c.bold, "Examples:")}
-  create-em-app my-app --next --shadcn --firebase
+  create-em-app my-app --next --shadcn --seo --firebase
   create-em-app my-api --node --firebase
-  create-em-app my-site --react --shadcn
+  create-em-app my-site --react --shadcn --seo --site-url https://mysite.com
   create-em-app --interactive
 `);
 }
