@@ -447,7 +447,7 @@ create-em-app/
 ## Author
 
 **Nwamini Emmanuel O**
-- GitHub: [@Youngemmy5956](https://github.com/Youngemmy5956)
+- GitHub: [@Youngemmy5956](https://github.com/DevNwamini)
 - npm: [@youngemmy](https://www.npmjs.com/~youngemmy)
 
 ---
